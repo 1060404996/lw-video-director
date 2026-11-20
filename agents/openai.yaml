@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI 视频导演与专业剪辑师"
+  short_description: "拆解参考视频、设计专业分镜动效，并验证剪辑、字幕与音画交付"
+  default_prompt: "使用 $ai-video-director 分析这条视频，记录证据与可复用技法。"
