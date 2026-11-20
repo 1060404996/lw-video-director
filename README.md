@@ -15,9 +15,21 @@
 - 测量混合音轨的 RMS、低能量窗口、采样峰值，以及可用时的 EBU R128 响度信息。
 - 根据受众、叙事和视觉层级规划分镜、镜头运动、转场、字幕与音画关系。
 - 用原创图形渲染卡片阵列、条形图和屏幕过渡的最小技术样例。
+- 可选检索 Motion Prompt 动效术语/逐帧示例和 FredTalk 公开场景组件，并按来源与许可规范登记。
 - 检查视频流、帧解码、首尾帧亮度、帧间隔和音视频时长差异。
 
 **边界：** 镜头检测结果只是候选，不是精确剪辑点；混合音轨低能量不等于人声停顿；元数据检查不能代替人工观看成片。该 Skill 不会仅凭参考视频推断作者使用了什么软件，也不会把可运行代码自动视为视觉验收通过。
+
+## 外部视觉库
+
+本项目提供可选的外部视觉资源接入规范：
+
+- [Motion Prompt](https://github.com/showheyohtaki/motion-prompt)：动效、运镜、转场、UI、光影与图表的术语和逐帧示例。
+- [FredTalk](https://github.com/njrhts2kvv-star/FredTalk)：口播视频场景与 Remotion 组件参考。
+- [接入、检索与许可边界](references/external-libraries.md)
+- [第三方资源声明](THIRD_PARTY_NOTICES.md)
+
+当前仓库只添加了引用和工作规范，没有复制外部代码或媒体。实际集成时逐项核验许可、作者、版本和素材权利。
 
 ## 安装
 
@@ -121,6 +133,7 @@ python scripts/render_components.py --output "D:/video-project/work/component-pr
 lw-video-director/
 ├── SKILL.md
 ├── README.md
+├── THIRD_PARTY_NOTICES.md
 ├── requirements.txt
 ├── agents/
 │   └── openai.yaml
