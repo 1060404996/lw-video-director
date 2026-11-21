@@ -13,6 +13,7 @@ description: 帮用户完成原创短视频策划、口播、分镜、动效与�
 - **“修改这一段、字幕/镜头不对、重剪” → 返修模式**：读取已有工程 manifest 与 QA 报告，定位时间码/镜头，保护已认可的部分；局部重渲染并复查关联接缝。无已有工程时明确指出。
 - **“拆解视频、研究作者、学习动效” → 学习模式**：读 [学习方法](references/study-method.md)、[案例索引](references/case-index.md)，按需读 [导演与叙事](references/cinematography-and-story.md)、[动效与转场](references/motion-and-transitions.md)、[音频与字幕](references/audio-and-subtitles.md)。只产生证据化分析，不擅自制作或复制。
 - **“找风格/组件、引用外部库” → 选型模式**：读 [外部视觉库接入规范](references/external-libraries.md)。从 LW Originals 与 LW References 检索；来源与可执行状态分离。
+- **要真正出片（口播 → 画面/音轨/字幕）→ 引擎模式**：读 [成片管线](references/production-pipeline.md)。在 `visual-studio/` 写 `project.json`（可沿用 `episode.json` 的 `startFrame`/`durationFrames`/`componentId`/`props`），`npm run lint:project` 校验，`npm run direct` 渲染 1080p 成片。音效用 `npm run sfx` 代码合成；配音走本地 7788 服务，不换成系统音色。
 
 ## LW Asset Engine 核心素材能力
 
