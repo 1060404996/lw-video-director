@@ -45,8 +45,8 @@ export function Timeline({params, theme}: SceneProps) {
 
   const kick = easeOut(seg(prog, 0.0, 0.16));
   const tail = 1 - easeInOut(seg(prog, 0.93, 1));
-  const axisIn = easeInOut(seg(prog, 0.08, 0.42));
-  const routeIn = easeInOut(seg(prog, 0.18, 0.5));
+  const axisIn = easeInOut(seg(prog, 0.02, 0.24));
+  const routeIn = easeInOut(seg(prog, 0.1, 0.42));
   const dot = easeInOut(seg(prog, 0.34, 0.86));
 
   return (
@@ -84,10 +84,10 @@ export function Timeline({params, theme}: SceneProps) {
               <g key={m.year} opacity={1}>
                 <line x1={x} y1={AX.y - 8} x2={x} y2={AX.y + 8} stroke={pal.muted} strokeWidth="1.4" opacity={0.7} />
                 <circle cx={x} cy={AX.y} r={isKey ? 6 + 2 * lit : 4} fill={isKey ? pal.accent : pal.paperHi} opacity={isKey ? 0.45 + 0.55 * lit : 0.9} stroke={pal.muted} strokeWidth="1" />
-                <text x={x} y={AX.y + 46} textAnchor="middle" fill={isKey && lit > 0.4 ? pal.ink : pal.muted} fontFamily={s.font} fontSize="22" fontWeight={isKey ? 600 : 400} opacity={0.55 + 0.45 * lit}>
+                <text x={x} y={i === 0 ? AX.y - 46 : AX.y + 46} textAnchor="middle" fill={isKey && lit > 0.4 ? pal.ink : pal.muted} fontFamily={s.font} fontSize="22" fontWeight={isKey ? 600 : 400} opacity={0.55 + 0.45 * lit}>
                   {m.label}
                 </text>
-                <text x={x} y={AX.y + 74 + (i % 2 ? 24 : 0)} textAnchor="middle" fill={pal.muted} fontFamily={s.font} fontSize="17" opacity={0.75 * lit}>
+                <text x={x} y={i === 0 ? AX.y - 20 : AX.y + 74 + (i % 2 ? 24 : 0)} textAnchor="middle" fill={pal.muted} fontFamily={s.font} fontSize="17" opacity={0.75 * lit}>
                   {m.note}
                 </text>
               </g>
