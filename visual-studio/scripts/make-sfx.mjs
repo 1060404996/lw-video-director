@@ -353,6 +353,133 @@ const lib = {};
   lib.flash = [fl.map((v, i) => v + tone[i]), d, 'flash_cut 亮闪瞬态 / 硬切过渡'];
 }
 
+{
+  // fiber_rustle —— 植物纤维摩擦 / 纸浆纤维散开（颗粒感，不是白噪声）
+  const d = 1.0;
+  const n = nSamp(d);
+  const r = rng(21);
+  const out = new Float64Array(n);
+  for (let k = 0; k < 70; k++) {
+    const at = Math.floor(r() * (n - 200));
+    const amp = 0.25 + r() * 0.6;
+    const len = 40 + Math.floor(r() * 260);
+    const decay = 0.006 + r() * 0.02;
+    const burst = biquad(noise(22 + k, len), 'bp', 2200 + r() * 4200, 1.4);
+    for (let i = 0; i < len && at + i < n; i++) out[at + i] += burst[i] * amp * Math.exp(-i / SR / decay);
+  }
+  const body = biquad(noise(23, n), 'bp', 3600, 0.9).map((v, i) => v * hump(n, 1.2)[i] * 0.25);
+  lib.fiber_rustle = [decor(Array.from(out).map((v, i) => v + body[i]).slice(0, nSamp(1.3)), 0.35, 0.32, 24), d, '纤维摩擦 / 纸浆纤维散开'];
+}
+{
+  // paper_form —— 纸张成形（一声轻脆的纸响 + 低频落定）
+  const d = 0.5;
+  const n = nSamp(d);
+  const thud = Array.from({length: n}, (_, i) => Math.sin(2 * Math.PI * 74 * (i / SR)) * Math.exp(-i / SR / 0.16) * 0.7);
+  const snap = biquad(noise(25, n), 'hp', 1600, 0.7071).map((v, i) => v * Math.exp(-i / SR / 0.02) * 0.55);
+  const tear = biquad(noise(26, n), 'bp', 3200, 1.1).map((v, i) => v * Math.exp(-i / SR / 0.06) * 0.22);
+  lib.paper_form = [decor(thud.map((v, i) => v + snap[i] + tear[i]).slice(0, nSamp(0.7)), 0.3, 0.3, 27), d, '纸张成形 / 纤维压平'];
+}
+{
+  // material_tap —— 原料标本落位（木质轻叩）
+  const d = 0.16;
+  const n = nSamp(d);
+  const body = Array.from({length: n}, (_, i) => {
+    const t = i / SR;
+    return (Math.sin(2 * Math.PI * 210 * t) * 0.6 + Math.sin(2 * Math.PI * 96 * t) * 0.4) * Math.exp(-t / 0.028);
+  });
+  const click = biquad(noise(28, n), 'bp', 2600, 1.4).map((v, i) => v * Math.exp(-i / SR / 0.006) * 0.3);
+  lib.material_tap = [body.map((v, i) => v + click[i]), d, '原料标本落位 / 木质轻叩'];
+}
+{
+  // cloth_swish —— 布料入场 / 破布摊开
+  const d = 0.55;
+  const n = nSamp(d);
+  const w = sweptBandpass(d, 260, 2400, 1100, 1.8, 29).map((v, i) => v * Math.sin((Math.PI * i) / (n - 1)) ** 1.4);
+  lib.cloth_swish = [panSweep(w, -0.5, 0.5), d, '布料摊开 / 织物质感入场'];
+}
+{
+  // fiber_converge —— 四原料汇聚成束（上升的收束声）
+  const d = 1.0;
+  const n = nSamp(d);
+  const sweep = sweptBandpass(d, 420, 3200, 2200, 1.3, 30).map((v, i) => {
+    const u = i / (n - 1);
+    return v * u ** 1.6 * Math.min(1, (1 - u) / 0.05);
+  });
+  const tick = new Float64Array(n);
+  const r = rng(31);
+  for (let k = 0; k < 26; k++) {
+    const at = Math.floor(r() * (n - 300));
+    const len = 200;
+    const b = biquad(noise(32 + k, len), 'bp', 3000 + r() * 2000, 2);
+    for (let i = 0; i < len && at + i < n; i++) tick[at + i] += b[i] * 0.18 * Math.exp(-i / SR / 0.01);
+  }
+  lib.fiber_converge = [panSweep(Array.from(sweep).map((v, i) => v + tick[i]), -0.35, 0.35), d, '四原料汇聚成纤维束'];
+}
+{
+  // splash_in —— 纤维团落水（低频 plop + 溅水 + 小气泡）
+  const d = 0.9;
+  const n = nSamp(d);
+  const plop = Array.from({length: n}, (_, i) => {
+    const t = i / SR;
+    const f = 96 * Math.exp(-t / 0.14) + 42;
+    return Math.sin(2 * Math.PI * f * t) * Math.exp(-t / 0.2);
+  });
+  const splash = biquad(noise(33, n), 'hp', 900, 0.7071).map((v, i) => v * Math.exp(-i / SR / 0.11) * 0.7);
+  const bub = Array.from({length: n}, (_, i) => {
+    const t = i / SR;
+    return Math.sin(2 * Math.PI * (520 - 180 * t) * t) * Math.exp(-t / 0.22) * 0.12 * Math.min(1, i / 120);
+  });
+  lib.splash_in = [decor(plop.map((v, i) => v + splash[i] + bub[i]).slice(0, nSamp(1.1)), 0.4, 0.35, 34), d, '纤维团入水 / 溅水'];
+}
+{
+  // bubbles_loop —— 浸泡气泡床（可循环铺在浸泡段）
+  const d = 2.8;
+  const n = nSamp(d);
+  const out = new Float64Array(n);
+  const r = rng(35);
+  for (let k = 0; k < 90; k++) {
+    const at = Math.floor(r() * n);
+    const f0 = 380 + r() * 900;
+    const len = 200 + Math.floor(r() * 900);
+    const amp = 0.12 + r() * 0.3;
+    for (let i = 0; i < len && at + i < n; i++) {
+      const t = i / SR;
+      const env = Math.sin((Math.PI * i) / len);
+      out[at + i] += Math.sin(2 * Math.PI * f0 * (1 + 0.02 * Math.sin(t * 30)) * t) * env * amp * 0.5;
+    }
+  }
+  const bed = biquad(noise(36, n), 'lp', 1200, 0.7071).map((v) => v * 0.06);
+  lib.bubbles_loop = [decor(Array.from(out).map((v, i) => v + bed[i]).slice(0, nSamp(3.0)), 0.5, 0.4, 37), d, '浸泡气泡床 / 循环'];
+}
+{
+  // water_bed —— 水下低频环境（浸泡段底噪）
+  const d = 4.0;
+  const n = nSamp(d);
+  const nz = biquad(biquad(noise(38, n), 'lp', 780, 0.7071), 'hp', 90, 0.7071);
+  const out = nz.map((v, i) => {
+    const u = i / (n - 1);
+    const mod = 0.55 + 0.45 * Math.sin(2 * Math.PI * 0.6 * u + 1.2);
+    return v * mod * Math.sin(Math.PI * u) ** 0.6;
+  });
+  lib.water_bed = [decor(out, 0.6, 0.3, 39), d, '水下环境底噪 / 浸泡段'];
+}
+{
+  // fiber_settle —— 纤维沉底 / 浆垫成形（颗粒由密到疏）
+  const d = 0.9;
+  const n = nSamp(d);
+  const out = new Float64Array(n);
+  const r = rng(40);
+  for (let k = 0; k < 34; k++) {
+    const u = k / 34;
+    const at = Math.floor(u ** 1.4 * (n - 400));
+    const amp = (0.5 - u * 0.28) * (0.5 + r() * 0.7);
+    const len = 300;
+    const b = biquad(noise(41 + k, len), 'bp', 1400 + r() * 2600, 1.6);
+    for (let i = 0; i < len && at + i < n; i++) out[at + i] += b[i] * amp * Math.exp(-i / SR / 0.012);
+  }
+  lib.fiber_settle = [decor(Array.from(out).slice(0, nSamp(1.1)), 0.4, 0.3, 42), d, '纤维沉底 / 浆垫成形'];
+}
+
 // ---------- 输出 ----------
 fs.mkdirSync(OUT, {recursive: true});
 const manifest = {};

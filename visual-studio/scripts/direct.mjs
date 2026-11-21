@@ -184,7 +184,19 @@ async function main() {
   // 响度规范化（默认开启）：抖音/视频号目标 -16 LUFS 左右；音频重编码，画面直接拷贝
   if (!has('no-loudnorm')) {
     const tmp = output.replace(/\.mp4$/, '.norm.mp4');
-    const r = spawnSync('ffmpeg', ['-y', '-v', 'error', '-i', output, '-c:v', 'copy', '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-c:a', 'aac', '-b:a', '192k', tmp], {encoding: 'utf8'});
+    const r = spawnSync(
+      'ffmpeg',
+      [
+        '-y', '-v', 'error', '-i', output,
+        '-c:v', 'copy',
+        // loudnorm 默认会升到 192k 采样率，这里显式锁回 48k；TP 留 -2dB 余量，避免峰值贴 0
+        '-af', 'loudnorm=I=-16:TP=-2.0:LRA=11',
+        '-c:a', 'aac', '-b:a', '192k', '-ar', '48000',
+        '-movflags', '+faststart',
+        tmp,
+      ],
+      {encoding: 'utf8'},
+    );
     if (r.status === 0 && fs.existsSync(tmp)) {
       fs.renameSync(tmp, output);
       console.log('音频已规范化到 -16 LUFS');
