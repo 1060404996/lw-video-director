@@ -2,7 +2,7 @@ import React, {useMemo} from 'react';
 import {AbsoluteFill, Audio, Freeze, Sequence, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {Droplets, FileText} from 'lucide-react';
 import {Lottie} from '@remotion/lottie';
-import {localFrame,lottieFrame,validateLottie} from './timing.mjs';
+import {localFrame,lottieFrame,applyTheme} from './timing.mjs';
 export type ThemeTokens={bg:string;fg:string;accent:string;muted:string};
 export const paperTheme:ThemeTokens={bg:'#f5f3eb',fg:'#304d5b',accent:'#4f9296',muted:'#9bb7b5'};
 const icons={droplets:Droplets,paper:FileText};
@@ -14,14 +14,7 @@ export function IconMotion({name,theme=paperTheme,size=180,strokeWidth=1.4,start
 }
 export function StableLottie({data,theme=paperTheme,startFrame=0,rate=1,loop=false,size=260}:{data:Record<string,any>;theme?:ThemeTokens;startFrame?:number;rate?:number;loop?:boolean;size?:number}){
   const f=useCurrentFrame(),{fps}=useVideoConfig();
-  const checked=useMemo(()=>{
-    validateLottie(data);
-    if(!/^#[0-9a-fA-F]{6}$/.test(theme.accent))throw new Error('Accent must be #RRGGBB');
-    const copy=JSON.parse(JSON.stringify(data));
-    const rgb=[1,3,5].map(i=>parseInt(theme.accent.slice(i,i+2),16)/255);
-    for(const l of copy.layers)for(const s of l.shapes??[])if(s.nm==='theme-accent'&&s.ty==='fl')s.c={a:0,k:[...rgb,1]};
-    return copy;
-  },[data,theme.accent]);
+  const checked=useMemo(()=>applyTheme(data,theme.accent),[data,theme.accent]);
   // Freeze the official player at the calculated composition-frame position.
   // Remotion's Lottie player performs seek + render synchronization, no wall clock playback.
   const target=lottieFrame(Math.max(0,f-startFrame),fps,checked,rate,loop);

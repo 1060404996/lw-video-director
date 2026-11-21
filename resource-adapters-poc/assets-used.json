@@ -106,6 +106,27 @@
       "attributionRequired": true,
       "status": "render-tested",
       "visualReview": "keyframes-inspected; full-motion-review-pending"
+    },
+    {
+      "assetId": "paper-precomp",
+      "path": "assets/paper-precomp.json",
+      "sha256": "198cdf3fd92665a6238580f6615b871e2f9d792e08d5884b7901b0c5e62c87be",
+      "ownerLibrary": "lw-originals",
+      "author": "LW, original vector precomp fixture",
+      "license": "MIT",
+      "sourceUrl": "repository:resource-adapters-poc/assets/paper-precomp.json",
+      "version": "poc-02",
+      "licenseEvidence": "licenses/LW-MIT.txt; rights-example.json",
+      "rightsScopes": {
+        "reference": true,
+        "download": true,
+        "adapt": true,
+        "render": true,
+        "redistribute": true
+      },
+      "attributionRequired": true,
+      "status": "render-tested",
+      "visualReview": "keyframes-inspected; full-motion-review-pending"
     }
   ],
   "runtime": {
