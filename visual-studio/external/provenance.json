@@ -1,0 +1,20 @@
+{
+  "Motion Prompt": {
+    "revision": "683ecca0548a1754ada141d10dc3a009d4c59bef",
+    "files": {
+      "catalog-upstream.json": "1d1dfc5a1f575cb5680ee9ff773a280d51f489ef624b704a1ee20c079bba6ad8",
+      "element-001.txt": "f77c7f1b04c64e596709f9e883bc69d651a7449bedc57119115aeef524a7acc6",
+      "kit-motion.js": "7b3ee79d068fdb8ab735986fb0fe1cb44ab3a42500d9a619a56580fdbdfc2d75",
+      "LICENSE": "b687b1f10c8ea46937216c0e2b999b706572e0430d7a8d2934fc10cb96af4f46"
+    }
+  },
+  "FredTalk": {
+    "revision": "59b9e9957957dc9f3fd94ab78f95cec33c29e915",
+    "licenseScope": "first-party code only; third-party media excluded",
+    "files": {
+      "catalog-upstream.json": "2d8141c738dcfcd6e2ad59f0d8bab3f6301ea50d869d8db516636251ea5c2a2a",
+      "LICENSE": "953b50c9ac5a962991ef4d9d663f951ac4ea56931f248088acecd5a0a1ebcb79",
+      "THIRD_PARTY_NOTICES.md": "d65f7471bdf827cff47c51c6555fbf97efe8ba6ca771e491cb5c6dae9755d08e"
+    }
+  }
+}

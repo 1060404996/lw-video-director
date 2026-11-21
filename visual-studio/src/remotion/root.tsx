@@ -1,0 +1,3 @@
+import {Composition,registerRoot} from 'remotion';import {Scene} from './Scene';import {catalog} from '../catalog/registry';import {totalDuration} from '../components/shared';
+import {MotionPromptAdapter} from '../references/MotionPromptAdapter';
+function Root(){return <><Composition id="REF-MP001" component={MotionPromptAdapter} width={1280} height={720} fps={30} durationInFrames={141} defaultProps={{speed:1,scale:1}}/>{catalog.map(c=><Composition key={c.id} id={c.id} component={Scene} width={1280} height={720} fps={30} durationInFrames={120} defaultProps={{componentId:c.id,params:c.defaultProps,theme:'future' as const}} calculateMetadata={({props})=>({durationInFrames:Math.round(totalDuration(props.params)*30)})}/>)}</>};registerRoot(Root);

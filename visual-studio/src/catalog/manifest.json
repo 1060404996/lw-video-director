@@ -1,0 +1,37 @@
+{
+  "version": "0.2.0",
+  "fps": 30,
+  "styles": ["swiss", "future", "archive"],
+  "parameters": {
+    "title": {"label":"标题文字","type":"text","default":"让想法，开始流动。","maxLength":160},
+    "subtitle": {"label":"副标题","type":"text","default":"原创视觉系统 / ORIGINAL BY LW","maxLength":180},
+    "color": {"label":"强调颜色","type":"color","default":""},
+    "entrance": {"label":"入场 · 秒","type":"number","default":1,"min":0.2,"max":4,"step":0.1},
+    "hold": {"label":"停留 · 秒","type":"number","default":2,"min":0,"max":8,"step":0.1},
+    "exit": {"label":"退场 · 秒","type":"number","default":1,"min":0.2,"max":4,"step":0.1},
+    "easing": {"label":"缓动曲线","type":"select","default":"smooth","options":["linear","smooth","easeOut"]},
+    "distance": {"label":"运动距离 · px","type":"number","default":64,"min":0,"max":160,"step":1},
+    "rotation": {"label":"旋转 / 环绕角度","type":"number","default":0,"min":-180,"max":360,"step":1},
+    "scale": {"label":"主体缩放","type":"number","default":1,"min":0.6,"max":1.4,"step":0.05},
+    "intensity": {"label":"光照 / 光束强度","type":"number","default":1,"min":0,"max":2,"step":0.1},
+    "radius": {"label":"相机半径 · world units","type":"number","default":7,"min":5,"max":12,"step":0.1},
+    "ambient": {"label":"环境光强度","type":"number","default":0.7,"min":0.1,"max":2,"step":0.1},
+    "metalness": {"label":"金属度（主题默认为 -1）","type":"number","default":-1,"min":-1,"max":1,"step":0.1},
+    "roughness": {"label":"粗糙度（主题默认为 -1）","type":"number","default":-1,"min":-1,"max":1,"step":0.1},
+    "focus": {"label":"焦平面距离 · world units","type":"number","default":7.6,"min":3,"max":14,"step":0.1},
+    "aperture": {"label":"景深光圈（0 关闭）","type":"number","default":0.002,"min":0,"max":0.01,"step":0.0005},
+    "chartData": {"label":"图表数据 JSON（1–6 项，可含负数）","type":"data","default":[{"label":"研究","value":38},{"label":"设计","value":62},{"label":"验证","value":87}]},
+    "unit": {"label":"数据单位","type":"text","default":"%","maxLength":12},
+    "dataSource": {"label":"数据来源说明","type":"text","default":"演示数据 / 请替换为真实来源","maxLength":180},
+    "imageBefore": {"label":"前画面 · PNG/JPEG/WebP ≤3MB","type":"image","default":"sample:before"},
+    "imageAfter": {"label":"后画面 · PNG/JPEG/WebP ≤3MB","type":"image","default":"sample:after"},
+    "imageFit": {"label":"画面适配","type":"select","default":"contain","options":["contain","cover"]}
+  },
+  "components": [
+    {"id":"TYPE-001","name":"高级标题入场","category":"文字动画","description":"网格对齐、分行揭示与主题化排版；支持中文和长标题。","source":"src/components/typography/TitleEntrance.tsx","defaults":{},"editableParams":["title","subtitle","entrance","hold","exit","easing","distance","rotation","scale","color"]},
+    {"id":"TRANS-001","name":"遮罩无缝转场","category":"转场效果","description":"载入两个真实画面，用主题化遮罩连续交接；保持后画面至结束。","source":"src/components/transitions/MaskTransition.tsx","defaults":{"title":"画面之间，自然衔接。"},"editableParams":["imageBefore","imageAfter","imageFit","entrance","hold","exit","easing","color"]},
+    {"id":"CAM-001","name":"空间环绕运镜","category":"3D运镜","description":"真实几何、主题材质、环境光和深度缓冲景深；相机缓入缓出。","source":"src/components/camera/OrbitCamera.tsx","defaults":{"rotation":150,"title":"视角，决定看见。"},"editableParams":["title","subtitle","entrance","hold","exit","easing","radius","rotation","scale","color","intensity","ambient","metalness","roughness","focus","aperture"]},
+    {"id":"INFO-001","name":"动态数据图表","category":"信息图表","description":"输入真实数据、单位和来源；正负值共享标尺，支持 1–6 项。","source":"src/components/infographics/DataChart.tsx","defaults":{"title":"让数据，说明问题。"},"editableParams":["title","chartData","unit","dataSource","entrance","hold","exit","easing","color"]},
+    {"id":"LIGHT-001","name":"科技扫描光","category":"科技光影","description":"Canvas 扫描、轨道、刻度与主题材质，入场扫描后稳定停留再退场。","source":"src/components/lighting/ScanLight.tsx","defaults":{"title":"发现新的信号"},"editableParams":["title","subtitle","entrance","hold","exit","easing","color","intensity"]}
+  ]
+}

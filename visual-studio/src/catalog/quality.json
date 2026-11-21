@@ -1,0 +1,32 @@
+{
+  "TYPE-001": {
+    "renderStatus": "passed",
+    "technicalReviewStatus": "passed",
+    "visualReviewStatus": "pending-user",
+    "evidence": "test-results/v02-r3"
+  },
+  "TRANS-001": {
+    "renderStatus": "passed",
+    "technicalReviewStatus": "passed",
+    "visualReviewStatus": "pending-user",
+    "evidence": "test-results/v02-r3"
+  },
+  "CAM-001": {
+    "renderStatus": "passed",
+    "technicalReviewStatus": "passed",
+    "visualReviewStatus": "pending-user",
+    "evidence": "test-results/v02-r3"
+  },
+  "INFO-001": {
+    "renderStatus": "passed",
+    "technicalReviewStatus": "passed",
+    "visualReviewStatus": "pending-user",
+    "evidence": "test-results/v02-r3"
+  },
+  "LIGHT-001": {
+    "renderStatus": "passed",
+    "technicalReviewStatus": "passed",
+    "visualReviewStatus": "pending-user",
+    "evidence": "test-results/v02-r3"
+  }
+}

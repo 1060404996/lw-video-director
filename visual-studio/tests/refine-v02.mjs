@@ -1,0 +1,8 @@
+import fs from 'node:fs';import path from 'node:path';import {renderVideo,still} from '../render.mjs';import {defaultsFor} from '../src/catalog/validation.mjs';
+const out=path.resolve('test-results/v02-r3');fs.mkdirSync(out,{recursive:true});for(const f of fs.readdirSync('test-results/v02-r2'))fs.copyFileSync(path.join('test-results/v02-r2',f),path.join(out,f));
+for(const id of ['TYPE-001','CAM-001']){const props={componentId:id,theme:id==='TYPE-001'?'swiss':'future',params:defaultsFor(id)};await renderVideo(props,path.join(out,`${id}.mp4`));for(const frame of [0,15,30,60,90,105,119])await still(props,frame,path.join(out,`${id}-${frame}.png`));for(const theme of ['swiss','future','archive'])await still({...props,theme},60,path.join(out,`${id}-${theme}.png`));console.log('REFINED',id)}
+await still({componentId:'TYPE-001',theme:'archive',params:{...defaultsFor('TYPE-001'),title:'中文长标题：建立一套能够持续演进、真实验证并且清楚表达复杂概念的原创视觉设计语言'.repeat(3).slice(0,160),entrance:.2,hold:0,exit:.2,distance:160,rotation:360,scale:1.4}},6,path.join(out,'extreme-TYPE-001.png'));
+await still({componentId:'CAM-001',theme:'swiss',params:{...defaultsFor('CAM-001'),radius:5,scale:1.4,rotation:360,aperture:.01,focus:3,intensity:2,ambient:2,metalness:1,roughness:0}},60,path.join(out,'extreme-CAM-001.png'));
+for(const aperture of [0,.01])await still({componentId:'CAM-001',theme:'future',params:{...defaultsFor('CAM-001'),aperture,focus:5}},60,path.join(out,`dof-${aperture}.png`));
+for(const color of ['#d53d61','#207657'])await still({componentId:'TYPE-001',theme:'swiss',params:{...defaultsFor('TYPE-001'),color}},60,path.join(out,`color-${color.slice(1)}.png`));
+console.log('REFINEMENT COMPLETE');

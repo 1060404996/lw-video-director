@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.cache/
+exports/
+test-results/
+
+# Required release sources: override the parent repository's generic JSON/media ignores.
+!package.json
+!package-lock.json
+!tsconfig.json
+!src/**/*.json
+!external/**/*.json
+!public/**/*.png
+!public/**/*.jpg
+!public/**/*.jpeg
