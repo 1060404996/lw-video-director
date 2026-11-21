@@ -5,6 +5,7 @@ import {catalog} from '../catalog/registry';
 import {themes} from '../styles/themes';
 import {Scene} from '../remotion/Scene';
 import {FiberBridge} from '../components/papermaking/FiberBridge';
+import {MistMountains} from '../components/backdrop/MistMountains';
 import {buildTimeline, transitionPhase} from './timeline.mjs';
 import type {ProjectFile, TimelineScene} from './types';
 
@@ -74,7 +75,7 @@ const SceneTake: React.FC<{scene: TimelineScene; contentScale: number}> = ({scen
 };
 
 /** 纤维桥：接点前后把「正在动的纤维」交到下一镜，替代整段交叉溶解 */
-const BridgeTake: React.FC<{kind: 'toMaterials' | 'intoVat'; dur: number; contentScale: number; accent: string; muted: string}> = ({
+const BridgeTake: React.FC<{kind: 'toMaterials' | 'intoVat' | 'intoMortar' | 'intoScoop'; dur: number; contentScale: number; accent: string; muted: string}> = ({
   kind,
   dur,
   contentScale,
@@ -186,7 +187,7 @@ const CueView: React.FC<{cue: {duration: number; lines: string[]}; fontSize: num
 
 export const ProjectVideo: React.FC<{project: ProjectFile}> = ({project}) => {
   const timeline = useMemo(() => buildTimeline(project), [project]);
-  const bridges = ((project as ProjectFile & {bridges?: {to: string; kind: 'toMaterials' | 'intoVat'; duration?: number}[]})
+  const bridges = ((project as ProjectFile & {bridges?: {to: string; kind: 'toMaterials' | 'intoVat' | 'intoMortar' | 'intoScoop'; duration?: number}[]})
     .bridges ?? []).filter((b) => b && b.to);
   const style = themes[timeline.theme];
   const band = timeline.subtitles.enabled ? bandHeight(timeline) : 0;
@@ -211,6 +212,14 @@ export const ProjectVideo: React.FC<{project: ProjectFile}> = ({project}) => {
         backgroundSize: `${themes[timeline.theme].grid}px ${themes[timeline.theme].grid}px`,
       }}
     >
+      {timeline.meta?.backdrop === 'mist-mountains' ? (
+        <MistMountains
+          theme={timeline.theme}
+          parallax={timeline.meta.backdropParallax ?? 1}
+          haze={timeline.meta.backdropHaze ?? 1}
+        />
+      ) : null}
+
       {timeline.scenes.map((scene) => (
         <Sequence key={scene.id} from={scene.from} durationInFrames={scene.duration} name={scene.id}>
           <SceneTake scene={scene} contentScale={contentScale} />

@@ -97,10 +97,17 @@ async function main() {
     });
   }
   resolved.scenes = (resolved.scenes ?? []).map((s, i) => {
-    if (!s.vo) return s;
-    const abs = /^(https?:|data:)/.test(s.vo) ? null : path.resolve(baseDir, s.vo);
-    const voDuration = s.voDuration ?? (abs ? probe(abs) : null);
-    return {...s, vo: syncAsset(baseDir, s.vo, slug, `vo-${s.id ?? i + 1}`), voDuration: voDuration ?? s.voDuration};
+    // 场景参数里引用的本地图片（如原料标本 materials[]）同样要同步进 public，
+    // 否则成片里会出现 404 的破图——截图看不出来，渲完才发现。
+    let next = s;
+    const mats = s.params?.materials;
+    if (Array.isArray(mats) && mats.length) {
+      next = {...s, params: {...s.params, materials: mats.map((m, k) => ({...m, src: syncAsset(baseDir, m.src, slug, `mat${i + 1}-${k + 1}`)}))}};
+    }
+    if (!next.vo) return next;
+    const abs = /^(https?:|data:)/.test(next.vo) ? null : path.resolve(baseDir, next.vo);
+    const voDuration = next.voDuration ?? (abs ? probe(abs) : null);
+    return {...next, vo: syncAsset(baseDir, next.vo, slug, `vo-${next.id ?? i + 1}`), voDuration: voDuration ?? next.voDuration};
   });
 
   // 3. SRT → cues（字幕只走 SRT 或显式 cues，不做文本轨硬拼）

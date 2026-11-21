@@ -8,6 +8,7 @@
  */
 import type {Params, SceneProps} from '../../catalog/types';
 import {resolveStyle} from '../../styles/themes';
+import {paperPalette} from './palette';
 import {clamp01, easeInOut, easeOut, lerp, mulberry32, seg, strandPath, useShot} from './kit';
 
 type P = Params & {span?: number};
@@ -106,6 +107,7 @@ const CLUMP = (() => {
 export function SoakVat({params, theme}: SceneProps) {
   const p = params as P;
   const s = resolveStyle(theme, params);
+  const pal = paperPalette(theme, p.color);
   const {p: prog} = useShot(p.span, 3.8);
 
   const soak = easeInOut(seg(prog, 0.16, 0.92));
@@ -124,39 +126,39 @@ export function SoakVat({params, theme}: SceneProps) {
 
   return (
     <div style={{position: 'absolute', inset: 0}}>
-      <div style={{position: 'absolute', inset: '-16%', background: '#ded1b7'}} />
+      <div style={{position: 'absolute', inset: '-16%', background: pal.page}} />
       <svg style={{position: 'absolute', inset: 0}} width="100%" height="100%" viewBox={`0 0 ${W} ${H}`}>
         <defs>
           <linearGradient id="sv-water" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#a97f4c" stopOpacity="0.92" />
-            <stop offset="0.5" stopColor="#8e6539" stopOpacity="0.94" />
-            <stop offset="1" stopColor="#6d4a26" stopOpacity="0.97" />
+            <stop offset="0" stopColor={pal.waterHi} stopOpacity="0.92" />
+            <stop offset="0.5" stopColor={pal.waterMid} stopOpacity="0.94" />
+            <stop offset="1" stopColor={pal.waterLo} stopOpacity="0.97" />
           </linearGradient>
           <linearGradient id="sv-wood" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#b08a5f" />
-            <stop offset="0.3" stopColor="#96714a" />
-            <stop offset="1" stopColor="#6f5233" />
+            <stop offset="0" stopColor={pal.clayHi} />
+            <stop offset="0.3" stopColor={pal.clayMid} />
+            <stop offset="1" stopColor={pal.clayLo} />
           </linearGradient>
           <linearGradient id="sv-wall-in" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#7a5a36" />
-            <stop offset="1" stopColor="#4a3118" />
+            <stop offset="0" stopColor={pal.tankIn} />
+            <stop offset="1" stopColor={pal.tankLo} />
           </linearGradient>
           <linearGradient id="sv-glass" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stopColor="#fff8e6" stopOpacity="0" />
-            <stop offset="0.45" stopColor="#fff8e6" stopOpacity="0.14" />
-            <stop offset="1" stopColor="#fff8e6" stopOpacity="0" />
+            <stop offset="0" stopColor={pal.foam} stopOpacity="0" />
+            <stop offset="0.45" stopColor={pal.foam} stopOpacity="0.14" />
+            <stop offset="1" stopColor={pal.foam} stopOpacity="0" />
           </linearGradient>
           <linearGradient id="sv-depth" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#000" stopOpacity="0" />
             <stop offset="1" stopColor="#000" stopOpacity="0.16" />
           </linearGradient>
           <radialGradient id="sv-table" cx="0.5" cy="0.5" r="0.62">
-            <stop offset="0" stopColor="#8b7554" stopOpacity="0.24" />
-            <stop offset="1" stopColor="#8b7554" stopOpacity="0" />
+            <stop offset="0" stopColor={pal.shadow} stopOpacity="0.24" />
+            <stop offset="1" stopColor={pal.shadow} stopOpacity="0" />
           </radialGradient>
           <radialGradient id="sv-vignette" cx="0.5" cy="0.46" r="0.82">
-            <stop offset="0.5" stopColor="#3d2c1b" stopOpacity="0" />
-            <stop offset="1" stopColor="#3d2c1b" stopOpacity="0.28" />
+            <stop offset="0.5" stopColor={pal.tankLo} stopOpacity="0" />
+            <stop offset="1" stopColor={pal.tankLo} stopOpacity="0.28" />
           </radialGradient>
           <filter id="sv-soft" x="-40%" y="-40%" width="180%" height="180%">
             <feGaussianBlur stdDeviation="6" />
@@ -170,7 +172,7 @@ export function SoakVat({params, theme}: SceneProps) {
         </defs>
 
         {/* 台面 */}
-        <rect width={W} height={H} fill="#ded1b7" />
+        <rect width={W} height={H} fill={pal.page} />
         <ellipse cx={CX} cy={VAT.outBottom + 12} rx={530} ry={44} fill="url(#sv-table)" />
 
         {/* 文本区 */}
@@ -210,7 +212,7 @@ export function SoakVat({params, theme}: SceneProps) {
           {/* 盆底 */}
           <polygon
             points={`${VAT.outTopL + 16},${VAT.outBottom} ${VAT.outTopR - 16},${VAT.outBottom} ${W_R},${FLOOR_Y} ${W_L},${FLOOR_Y}`}
-            fill="#5e4429"
+            fill={pal.tankDark}
           />
           {/* 内壁（水面以上可见） */}
           <polygon
@@ -226,7 +228,7 @@ export function SoakVat({params, theme}: SceneProps) {
               y1={VAT.top + 22 + i * 30}
               x2={VAT.outTopL + 13}
               y2={VAT.top + 26 + i * 30}
-              stroke="#5c4227"
+              stroke={pal.tankDark}
               strokeWidth="1"
               opacity="0.22"
             />
@@ -238,22 +240,22 @@ export function SoakVat({params, theme}: SceneProps) {
               y1={VAT.top + 22 + i * 30}
               x2={VAT.outTopR - 13}
               y2={VAT.top + 26 + i * 30}
-              stroke="#5c4227"
+              stroke={pal.tankDark}
               strokeWidth="1"
               opacity="0.22"
             />
           ))}
           {/* 盆沿与盆脚的暗线 */}
-          <line x1={VAT.outTopL} y1={VAT.top} x2={VAT.inTopL} y2={VAT.top} stroke="#e6cba2" strokeWidth="1.6" opacity="0.55" />
-          <line x1={VAT.inTopR} y1={VAT.top} x2={VAT.outTopR} y2={VAT.top} stroke="#e6cba2" strokeWidth="1.6" opacity="0.55" />
-          <line x1={VAT.inTopL} y1={VAT.top} x2={VAT.inTopR} y2={VAT.top} stroke="#3f2c19" strokeWidth="1.2" opacity="0.45" />
-          <line x1={VAT.outTopL + 16} y1={VAT.outBottom} x2={VAT.outTopR - 16} y2={VAT.outBottom} stroke="#3c2a18" strokeWidth="2" opacity="0.4" />
+          <line x1={VAT.outTopL} y1={VAT.top} x2={VAT.inTopL} y2={VAT.top} stroke={pal.clayHi} strokeWidth="1.6" opacity="0.55" />
+          <line x1={VAT.inTopR} y1={VAT.top} x2={VAT.outTopR} y2={VAT.top} stroke={pal.clayHi} strokeWidth="1.6" opacity="0.55" />
+          <line x1={VAT.inTopL} y1={VAT.top} x2={VAT.inTopR} y2={VAT.top} stroke={pal.vignette} strokeWidth="1.2" opacity="0.45" />
+          <line x1={VAT.outTopL + 16} y1={VAT.outBottom} x2={VAT.outTopR - 16} y2={VAT.outBottom} stroke={pal.vignette} strokeWidth="2" opacity="0.4" />
         </g>
 
         {/* 落水的干纤维团：画在水体之下，入水后自然被水吞掉 */}
         <g opacity={clump}>
           <g transform={`translate(${CX} ${dropY}) scale(1.32 ${1.32 / squash})`}>
-            <ellipse cx="0" cy="0" rx="52" ry="30" fill="#c9ab77" opacity="0.2" />
+            <ellipse cx="0" cy="0" rx="52" ry="30" fill={pal.lump} opacity="0.2" />
             {CLUMP.map((c, i) => (
               <line
                 key={`clump-${i}`}
@@ -261,7 +263,7 @@ export function SoakVat({params, theme}: SceneProps) {
                 y1={c.y1}
                 x2={c.x2}
                 y2={c.y2}
-                stroke="#dcc59b"
+                stroke={pal.lumpFiber}
                 strokeWidth="1.4"
                 strokeOpacity={c.a}
                 strokeLinecap="round"
@@ -274,13 +276,13 @@ export function SoakVat({params, theme}: SceneProps) {
         {/* 水体 */}
         <g clipPath="url(#sv-water-clip)">
           <rect x={VAT.inTopL} y={WATER_Y} width={VAT.inTopR - VAT.inTopL} height={FLOOR_Y - WATER_Y} fill="url(#sv-water)" />
-          <rect x={VAT.inTopL} y={WATER_Y} width={VAT.inTopR - VAT.inTopL} height={FLOOR_Y - WATER_Y} fill="#4a3018" opacity={0.04 + soak * 0.14} />
+          <rect x={VAT.inTopL} y={WATER_Y} width={VAT.inTopR - VAT.inTopL} height={FLOOR_Y - WATER_Y} fill={pal.waterLo} opacity={0.04 + soak * 0.14} />
           <rect x={VAT.inTopL} y={WATER_Y} width={VAT.inTopR - VAT.inTopL} height={FLOOR_Y - WATER_Y} fill="url(#sv-depth)" />
 
           {FLOW.map((f, i) => {
             const dx = Math.sin(prog * 2 + f.phase) * 26;
             return (
-              <line key={`flow-${i}`} x1={f.x + dx} y1={f.y} x2={f.x + dx + f.len} y2={f.y - 4} stroke="#f3e2bd" strokeWidth="1" opacity={f.a} />
+              <line key={`flow-${i}`} x1={f.x + dx} y1={f.y} x2={f.x + dx + f.len} y2={f.y - 4} stroke={pal.foam} strokeWidth="1" opacity={f.a} />
             );
           })}
 
@@ -294,7 +296,7 @@ export function SoakVat({params, theme}: SceneProps) {
               <path
                 key={`fib-${i}`}
                 d={strandPath(f, x, y, f.rot + soak * 6, len)}
-                stroke="#f6e9cd"
+                stroke={pal.foam}
                 strokeWidth={f.w}
                 strokeOpacity={clamp01(f.a * (0.3 + 0.7 * d))}
                 fill="none"
@@ -305,7 +307,7 @@ export function SoakVat({params, theme}: SceneProps) {
           })}
 
           {/* 盆底沉积的浆垫 */}
-          <ellipse cx={CX} cy={FLOOR_Y - 10} rx={410} ry="14" fill="#8a6636" opacity={0.16 + soak * 0.18} filter="url(#sv-soft)" />
+          <ellipse cx={CX} cy={FLOOR_Y - 10} rx={410} ry="14" fill={pal.waterMid} opacity={0.16 + soak * 0.18} filter="url(#sv-soft)" />
 
           {/* 气泡 */}
           {BUBBLES.map((b, i) => {
@@ -316,8 +318,8 @@ export function SoakVat({params, theme}: SceneProps) {
             const wob = Math.sin(cyc * 6 + b.wob) * 3;
             return (
               <g key={`bub-${i}`}>
-                <circle cx={b.x + wob} cy={y} r={r} fill="none" stroke="#ffeccb" strokeWidth="0.9" opacity={a} />
-                <circle cx={b.x + wob - r * 0.32} cy={y - r * 0.34} r={r * 0.3} fill="#fff6dd" opacity={a * 0.55} />
+                <circle cx={b.x + wob} cy={y} r={r} fill="none" stroke={pal.bubble} strokeWidth="0.9" opacity={a} />
+                <circle cx={b.x + wob - r * 0.32} cy={y - r * 0.34} r={r * 0.3} fill={pal.foam} opacity={a * 0.55} />
               </g>
             );
           })}
@@ -325,25 +327,25 @@ export function SoakVat({params, theme}: SceneProps) {
           {/* 斜壁在水里的暗边：让水体有厚度 */}
           <polygon
             points={`${VAT.inTopL},${WATER_Y} ${VAT.inTopL + 16},${WATER_Y} ${W_L + 10},${FLOOR_Y} ${W_L},${FLOOR_Y}`}
-            fill="#2f1e0d"
+            fill={pal.ink}
             opacity="0.35"
           />
           <polygon
             points={`${VAT.inTopR},${WATER_Y} ${VAT.inTopR - 16},${WATER_Y} ${W_R - 10},${FLOOR_Y} ${W_R},${FLOOR_Y}`}
-            fill="#2f1e0d"
+            fill={pal.ink}
             opacity="0.32"
           />
         </g>
 
         {/* 水面 */}
         <g>
-          <line x1={VAT.inTopL} y1={WATER_Y} x2={VAT.inTopR} y2={WATER_Y} stroke="#fff2d3" strokeWidth="1.8" opacity="0.7" />
-          <rect x={VAT.inTopL} y={WATER_Y - 4} width={VAT.inTopR - VAT.inTopL} height="12" fill="#fff0cb" opacity="0.1" filter="url(#sv-soft)" />
+          <line x1={VAT.inTopL} y1={WATER_Y} x2={VAT.inTopR} y2={WATER_Y} stroke={pal.foam} strokeWidth="1.8" opacity="0.7" />
+          <rect x={VAT.inTopL} y={WATER_Y - 4} width={VAT.inTopR - VAT.inTopL} height="12" fill={pal.foam} opacity="0.1" filter="url(#sv-soft)" />
           {Array.from({length: 5}, (_, i) => {
             const ph = i * 0.9;
             const cx = VAT.inTopL + 170 + i * 195 + Math.sin(prog * 3 + ph) * 18;
             return (
-              <ellipse key={`rip-${i}`} cx={cx} cy={WATER_Y + 2} rx={30 + i * 9} ry="3.4" fill="none" stroke="#ffe9c2" strokeWidth="1" opacity="0.26" />
+              <ellipse key={`rip-${i}`} cx={cx} cy={WATER_Y + 2} rx={30 + i * 9} ry="3.4" fill="none" stroke={pal.foam} strokeWidth="1" opacity="0.26" />
             );
           })}
           {Array.from({length: 3}, (_, i) => {
@@ -357,7 +359,7 @@ export function SoakVat({params, theme}: SceneProps) {
                 rx={12 + t * (68 + i * 24)}
                 ry={4 + t * (13 + i * 6)}
                 fill="none"
-                stroke="#ffeecb"
+                stroke={pal.foam}
                 strokeWidth={1.5 - t}
                 opacity={(1 - t) * 0.42}
               />
@@ -368,7 +370,7 @@ export function SoakVat({params, theme}: SceneProps) {
             if (t <= 0 || t >= 1) return null;
             const x = CX + d.vx * t;
             const y = WATER_Y - (d.vy * t - 210 * t * t);
-            return <circle key={`spt-${i}`} cx={x} cy={y} r={d.r} fill="#fff4d8" opacity={(1 - t) * 0.5} />;
+            return <circle key={`spt-${i}`} cx={x} cy={y} r={d.r} fill={pal.foam} opacity={(1 - t) * 0.5} />;
           })}
         </g>
 

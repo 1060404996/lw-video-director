@@ -72,6 +72,58 @@ export function breakCaption(text, maxUnits = 12, maxLines = 2) {
   return lines.length ? lines : [''];
 }
 
+/**
+ * 一句口播拆成多条字幕。
+ *
+ * 为什么要拆：一个镜头往往配一整段定稿文案（三十字以上），单条字幕只留两行会吞掉后半句。
+ * 「能不能塞进两行」直接用 breakCaption 的返回值判断（截断时末行会带省略号，拼接后必然不等于原文），
+ * 而不是靠字数估算；装不下就按标点断句重排，块与块之间按字数比例分配停留时长，
+ * 仍然贴着该镜配音的起止，不改动音画关系。本来就装得下的短句原样只出一条，既有工程字幕节奏不变。
+ */
+export function splitSceneCues(text, start, end, maxUnits = 12) {
+  const clean = String(text ?? '').replace(/\s+/g, ' ').trim();
+  const dur = Math.max(0.3, end - start);
+  if (!clean) return [];
+  const fitsTwo = (t) => breakCaption(t, maxUnits, 2).join('') === String(t).trim();
+  if (fitsTwo(clean)) return [{start, end, text: clean}];
+
+  const width = (s) => [...s].reduce((n, ch) => n + unit(ch), 0);
+  const clauses = clean.split(/(?<=[，。！？；：])\s*/).filter(Boolean);
+  const chunks = [];
+  let cur = '';
+  for (const c of clauses) {
+    if (cur && !fitsTwo(cur + c)) {
+      chunks.push(cur);
+      cur = '';
+    }
+    if (!cur && !fitsTwo(c)) {
+      // 单个从句本身就装不下两行：按字数硬切，保证每块都落在两行内
+      let buf = '';
+      for (const ch of [...c]) {
+        if (buf && !fitsTwo(buf + ch)) {
+          chunks.push(buf);
+          buf = '';
+        }
+        buf += ch;
+      }
+      cur = buf;
+      continue;
+    }
+    cur += c;
+  }
+  if (cur.trim()) chunks.push(cur);
+
+  const total = chunks.reduce((n, s) => n + width(s), 0) || 1;
+  let cursor = start;
+  return chunks.map((s, i) => {
+    const share = (width(s) / total) * dur;
+    const st = cursor;
+    const en = i === chunks.length - 1 ? end : Math.min(end, cursor + Math.max(0.35, share));
+    cursor = en;
+    return {start: st, end: en, text: s.trim()};
+  });
+}
+
 export function parseSrt(raw) {
   const text = String(raw ?? '').replace(/\r/g, '');
   const blocks = text.split(/\n{2,}/).filter((b) => b.trim());
@@ -265,12 +317,12 @@ export function buildTimeline(project = {}) {
   } else {
     cues = scenes
       .filter((s) => String(s.caption).trim())
-      .map((s) => {
+      .flatMap((s) => {
         if (s.vo && s.voDuration) {
           const st = (s.from + s.prevOverlap) / fps;
-          return {start: st, end: st + s.voDuration + 0.05, text: s.caption};
+          return splitSceneCues(s.caption, st, st + s.voDuration + 0.05, maxUnits);
         }
-        return {start: s.startSec, end: s.endSec - 0.08, text: s.caption};
+        return splitSceneCues(s.caption, s.startSec, s.endSec - 0.08, maxUnits);
       });
   }
 
@@ -300,6 +352,7 @@ export function buildTimeline(project = {}) {
     width,
     height,
     theme,
+    meta: project.meta ?? {},
     totalFrames,
     totalSeconds: +(totalFrames / fps).toFixed(3),
     precise,

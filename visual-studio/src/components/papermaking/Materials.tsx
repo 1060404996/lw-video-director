@@ -13,6 +13,7 @@
 import {staticFile} from 'remotion';
 import type {Params, SceneProps} from '../../catalog/types';
 import {resolveStyle} from '../../styles/themes';
+import {paperBackdrop, paperPalette} from './palette';
 import {clamp01, easeInOut, easeOut, lerp, mulberry32, seg, useShot} from './kit';
 
 type Material = {src: string; label: string; note?: string};
@@ -42,6 +43,7 @@ const TRAILS = (() => {
 export function Materials({params, theme}: SceneProps) {
   const p = params as P;
   const s = resolveStyle(theme, params);
+  const pal = paperPalette(theme, p.color);
   const {p: prog} = useShot(p.span, 4.5);
   const list = (p.materials && p.materials.length ? p.materials : FALLBACK).slice(0, 4);
   const n = list.length;
@@ -63,17 +65,17 @@ export function Materials({params, theme}: SceneProps) {
 
   return (
     <div style={{position: 'absolute', inset: 0}}>
-      <div style={{position: 'absolute', inset: '-16%', background: '#e6dcc7'}} />
+      <div style={{position: 'absolute', inset: '-16%', background: paperBackdrop(pal, theme)}} />
       <svg style={{position: 'absolute', inset: 0}} width="100%" height="100%" viewBox="0 0 1280 720">
         <defs>
           <linearGradient id="ma-paper" x1="0" y1="0" x2="1" y2="1.1">
-            <stop offset="0" stopColor="#f5ecda" />
-            <stop offset="0.6" stopColor="#ebe1cd" />
-            <stop offset="1" stopColor="#ded1b7" />
+            <stop offset="0" stopColor={pal.paperHi} />
+            <stop offset="0.6" stopColor={pal.paperMid} />
+            <stop offset="1" stopColor={pal.paperLo} />
           </linearGradient>
           <radialGradient id="ma-spot" cx="0.5" cy="0.52" r="0.62">
-            <stop offset="0" stopColor="#fffdf3" stopOpacity="0.55" />
-            <stop offset="1" stopColor="#fffdf3" stopOpacity="0" />
+            <stop offset="0" stopColor={pal.paperHi} stopOpacity="0.55" />
+            <stop offset="1" stopColor={pal.paperHi} stopOpacity="0" />
           </radialGradient>
           <filter id="ma-soft" x="-40%" y="-40%" width="180%" height="180%">
             <feGaussianBlur stdDeviation="14" />
@@ -130,7 +132,7 @@ export function Materials({params, theme}: SceneProps) {
                   cy={cy + slot.size * 0.46}
                   rx={slot.size * 0.38 * slot.depth}
                   ry={slot.size * 0.09 * slot.depth}
-                  fill="#5c452c"
+                  fill={pal.shadow}
                   opacity={0.24 * dim}
                   filter="url(#ma-soft)"
                 />
@@ -142,7 +144,7 @@ export function Materials({params, theme}: SceneProps) {
                     y1={cy + slot.size * 0.32}
                     x2={cx + t.off * 0.45}
                     y2={cy + slot.size * 0.32 + t.len * (1 - enter * 0.75)}
-                    stroke="#7a6142"
+                    stroke={pal.fiberAlt}
                     strokeWidth="0.9"
                     strokeOpacity={0.18 * (1 - enter) * dim}
                   />
@@ -228,7 +230,7 @@ export function Materials({params, theme}: SceneProps) {
                     y1={y1 + drop * 220}
                     x2={lerp(x1, x2, a)}
                     y2={lerp(y1, y2, a) + drop * 220}
-                    stroke="#6f5636"
+                    stroke={pal.fiber}
                     strokeWidth={0.9}
                     strokeOpacity={0.44 * (1 - drop)}
                     strokeLinecap="round"
@@ -240,7 +242,7 @@ export function Materials({params, theme}: SceneProps) {
         </g>
 
         {/* 纸面暖调压一层，统一四张插画的色温 */}
-        <rect width="1280" height="720" fill="#6b4f2c" opacity="0.045" />
+        <rect width="1280" height="720" fill={pal.ink} opacity="0.045" />
       </svg>
     </div>
   );

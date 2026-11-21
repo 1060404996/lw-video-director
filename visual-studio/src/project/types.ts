@@ -38,6 +38,10 @@ export type ProjectFile = {
     fps?: number;
     theme?: ThemeId;
     style?: string;
+    /** 背景层：目前支持 mist-mountains（分层视差青山 + 雾） */
+    backdrop?: 'mist-mountains' | 'none';
+    backdropHaze?: number;
+    backdropParallax?: number;
     voDuration?: number;
   };
   /** vo：口播音频（相对 project.json 的路径或 URL） */
@@ -81,6 +85,7 @@ export type Timeline = {
   width: number;
   height: number;
   theme: ThemeId;
+  meta: ProjectFile['meta'];
   totalFrames: number;
   totalSeconds: number;
   scenes: TimelineScene[];

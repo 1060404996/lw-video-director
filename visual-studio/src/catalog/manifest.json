@@ -1,7 +1,7 @@
 {
   "version": "0.2.0",
   "fps": 30,
-  "styles": ["swiss", "future", "archive"],
+  "styles": ["swiss", "future", "archive", "mist-blue-paper"],
   "parameters": {
     "title": {"label":"标题文字","type":"text","default":"让想法，开始流动。","maxLength":160},
     "subtitle": {"label":"副标题","type":"text","default":"原创视觉系统 / ORIGINAL BY LW","maxLength":180},
@@ -35,6 +35,8 @@
     {"id":"LIGHT-001","name":"科技扫描光","category":"科技光影","description":"Canvas 扫描、轨道、刻度与主题材质，入场扫描后稳定停留再退场。","source":"src/components/lighting/ScanLight.tsx","defaults":{"title":"发现新的信号"},"editableParams":["title","subtitle","entrance","hold","exit","easing","color","intensity"]},
     {"id":"PAPER-001","name":"纤维成纸","category":"纸艺动画","description":"植物纤维从画外飞入、在纸面交织成帘纹，纸面随密度显影；镜头由肌理大特写拉开，标题分层揭示；结尾纤维重新松散外散，交接下一镜。","source":"src/components/papermaking/FiberFormation.tsx","defaults":{"title":"一张纸，四道工序","subtitle":"公元 105 年 · 蔡伦"},"editableParams":["title","subtitle","entrance","hold","exit","color"]},
     {"id":"MATERIAL-001","name":"原料标本","category":"信息编排","description":"四件原料插画错位入场、依次聚焦、收拢成束纤维下落；插画以 multiply 直接印在纸面上，不用四格等分看板。","source":"src/components/papermaking/Materials.tsx","defaults":{"title":"原料就四样","subtitle":"树皮 · 麻头 · 破布 · 渔网"},"editableParams":["title","subtitle","entrance","hold","exit","color"]},
-    {"id":"SOAK-001","name":"纸浆浸泡","category":"工艺演示","description":"陶缸 2.5D 剖面：干纤维团落水、散开、吸水变深，气泡上升与水流横移全部帧驱动；主体动作只解释「浸泡」。","source":"src/components/papermaking/SoakVat.tsx","defaults":{"title":"第一道：泡","subtitle":"泡到一撕就碎"},"editableParams":["title","subtitle","entrance","hold","exit","color"]}
+    {"id":"SOAK-001","name":"纸浆浸泡","category":"工艺演示","description":"陶缸 2.5D 剖面：干纤维团落水、散开、吸水变深，气泡上升与水流横移全部帧驱动；主体动作只解释「浸泡」。","source":"src/components/papermaking/SoakVat.tsx","defaults":{"title":"第一道：泡","subtitle":"泡到一撕就碎"},"editableParams":["title","subtitle","entrance","hold","exit","color"]},
+    {"id":"POUND-001","name":"石臼舂捣","category":"工艺演示","description":"石臼剖面 + 木杵七次舂捣：起落高度、臼体压缩、浆点飞溅与涟漪同步；臼内纤维随捣次逐轮变短，解释「捣得越细，纸越平」。","source":"src/components/papermaking/PoundMortar.tsx","defaults":{"title":"第二道：捣","subtitle":"捣得越细，纸越平"},"editableParams":["title","subtitle","holdText","entrance","hold","exit","color"]},
+    {"id":"SCOOP-001","name":"竹帘抄纸","category":"工艺演示","description":"水槽侧剖 + 竹帘入水、荡帘、起帘、成膜：水面被压出凹、帘面排水、膜上纤维沿帘向排布，解释「厚了写不动，薄了会破」。","source":"src/components/papermaking/SheetScoop.tsx","defaults":{"title":"第三道：抄","subtitle":"一抄，就是一层纸膜"},"editableParams":["title","subtitle","holdText","entrance","hold","exit","color"]}
   ]
 }

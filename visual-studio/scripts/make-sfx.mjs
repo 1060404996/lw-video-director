@@ -367,7 +367,9 @@ const lib = {};
     const burst = biquad(noise(22 + k, len), 'bp', 2200 + r() * 4200, 1.4);
     for (let i = 0; i < len && at + i < n; i++) out[at + i] += burst[i] * amp * Math.exp(-i / SR / decay);
   }
-  const body = biquad(noise(23, n), 'bp', 3600, 0.9).map((v, i) => v * hump(n, 1.2)[i] * 0.25);
+  // hump 必须提到 map 外面：放进回调里会每帧重建整条包络，复杂度变成 O(n²)（之前整库生成卡住就是这个原因）
+  const env = hump(n, 1.2);
+  const body = biquad(noise(23, n), 'bp', 3600, 0.9).map((v, i) => v * env[i] * 0.25);
   lib.fiber_rustle = [decor(Array.from(out).map((v, i) => v + body[i]).slice(0, nSamp(1.3)), 0.35, 0.32, 24), d, '纤维摩擦 / 纸浆纤维散开'];
 }
 {
@@ -480,14 +482,85 @@ const lib = {};
   lib.fiber_settle = [decor(Array.from(out).slice(0, nSamp(1.1)), 0.4, 0.3, 42), d, '纤维沉底 / 浆垫成形'];
 }
 
+{
+  // mortar_hit —— 木杵砸进石臼（低频闷响 + 石质硬壳 + 湿浆挤压）
+  const d = 0.6;
+  const n = nSamp(d);
+  const thud = Array.from({length: n}, (_, i) => {
+    const t = i / SR;
+    const f = 68 * Math.exp(-t / 0.06) + 44;
+    return Math.sin(2 * Math.PI * f * t) * Math.exp(-t / 0.09);
+  });
+  const stone = biquad(noise(43, n), 'bp', 780, 0.9).map((v, i) => v * Math.exp(-i / SR / 0.018) * 0.45);
+  const wet = biquad(noise(44, n), 'lp', 420, 0.7071).map((v, i) => v * Math.exp(-i / SR / 0.12) * 0.5);
+  lib.mortar_hit = [decor(thud.map((v, i) => v + stone[i] + wet[i]).slice(0, nSamp(0.75)), 0.25, 0.28, 45), d, '石臼舂捣：木杵落点闷响'];
+}
+{
+  // screen_dip —— 竹帘入水（下扫的水声 + 短促入水）
+  const d = 0.75;
+  const n = nSamp(d);
+  const sweep = sweptBandpass(d, 2400, 900, 420, 1.8, 46).map((v, i) => {
+    const u = i / (n - 1);
+    return v * Math.sin(Math.PI * u ** 0.7) ** 1.5;
+  });
+  const plop = Array.from({length: n}, (_, i) => {
+    const t = i / SR;
+    const f = 120 * Math.exp(-t / 0.1) + 55;
+    return Math.sin(2 * Math.PI * f * t) * Math.exp(-t / 0.16) * 0.45 * Math.min(1, i / 240);
+  });
+  lib.screen_dip = [panSweep(Array.from(sweep).map((v, i) => v + plop[i]), 0.3, -0.15), d, '竹帘入水 / 荡帘'];
+}
+{
+  // drip_water —— 起帘滴水（多颗水滴错落）
+  const d = 1.7;
+  const n = nSamp(d);
+  const out = new Float64Array(n);
+  const r = rng(47);
+  for (let k = 0; k < 14; k++) {
+    const at = Math.floor((0.05 + r() * 0.9) * (n - 400));
+    const f0 = 700 + r() * 900;
+    const len = Math.round(SR * (0.05 + r() * 0.09));
+    const amp = 0.25 + r() * 0.45;
+    for (let i = 0; i < len && at + i < n; i++) {
+      const t = i / SR;
+      out[at + i] += Math.sin(2 * Math.PI * (f0 + 120 * Math.sin(t * 60)) * t) * Math.exp(-t / 0.018) * amp;
+    }
+  }
+  lib.drip_water = [decor(Array.from(out).slice(0, nSamp(1.9)), 0.3, 0.25, 48), d, '竹帘起帘后滴水'];
+}
+{
+  // pulp_fold —— 纸膜在帘面上成形的轻微润湿（低频柔和起落，托住起帘动作）
+  const d = 0.9;
+  const n = nSamp(d);
+  const nz = biquad(biquad(noise(49, n), 'lp', 620, 0.7071), 'hp', 70, 0.7071);
+  const env = hump(n, 2.4);
+  const out = nz.map((v, i) => v * env[i] * 0.5);
+  lib.pulp_fold = [decor(out, 0.35, 0.3, 50), d, '纸膜成形的润湿声 / 起帘收束'];
+}
+
 // ---------- 输出 ----------
+// --only a,b,c 只重算指定音效（新增音效不必等整库重算完），--skip-stats 跳过频谱统计（更快）
+const argv = process.argv.slice(2);
+const argVal = (name) => {
+  const i = argv.indexOf(`--${name}`);
+  return i >= 0 && argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : null;
+};
+const only = argVal('only')?.split(',').map((s) => s.trim()).filter(Boolean) ?? null;
+const skipStats = argv.includes('--skip-stats');
 fs.mkdirSync(OUT, {recursive: true});
-const manifest = {};
+const manifestPath = path.join(OUT, 'manifest.json');
+const prevManifest = fs.existsSync(manifestPath) ? JSON.parse(fs.readFileSync(manifestPath, 'utf8')) : {};
+const manifest = {...prevManifest};
+const todo = Object.entries(lib).filter(([name]) => !only || only.includes(name));
+if (!todo.length) {
+  console.error(`--only 没有匹配到音效：${only.join(', ')}`);
+  process.exit(2);
+}
 console.log('name'.padEnd(14), 'dur'.padStart(5), 'peak'.padStart(7), 'rms'.padStart(7), 'centroid'.padStart(9));
-for (const [name, [ch, nominal, use]] of Object.entries(lib)) {
+for (const [name, [ch, nominal, use]] of todo) {
   const out = finish(ch);
   writeWav(path.join(OUT, `${name}.wav`), out);
-  const s = stats(out);
+  const s = skipStats ? {peakDb: null, rmsDb: null, centroidHz: null} : stats(out);
   const dur = +(out[0].length / SR).toFixed(3);
   manifest[name] = {file: `sfx/${name}.wav`, duration: dur, ...s, use};
   console.log(
@@ -498,5 +571,6 @@ for (const [name, [ch, nominal, use]] of Object.entries(lib)) {
     String(s.centroidHz).padStart(9),
   );
 }
-fs.writeFileSync(path.join(OUT, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
-console.log(`\n${Object.keys(manifest).length} 个音效 → ${path.relative(ROOT, OUT)}`);
+fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+console.log(`\n${todo.length} 个音效已重算 → ${path.relative(ROOT, OUT)}（manifest 共 ${Object.keys(manifest).length} 条）`);
+

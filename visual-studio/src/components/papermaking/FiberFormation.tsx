@@ -8,6 +8,7 @@
  */
 import type {Params, SceneProps} from '../../catalog/types';
 import {resolveStyle} from '../../styles/themes';
+import {paperPalette} from './palette';
 import {clamp01, decklePath, easeInOut, easeOut, lerp, mulberry32, seg, strandPath, useShot} from './kit';
 
 type P = Params & {span?: number};
@@ -107,6 +108,7 @@ const SCREEN = (() => {
 
 export function FiberFormation({params, theme}: SceneProps) {  const p = params as P;
   const s = resolveStyle(theme, params);
+  const pal = paperPalette(theme, p.color);
   const {p: prog} = useShot(p.span, 3.8);
 
   // 镜头：1.5 起（纤维肌理大特写，镜头跟着水线走）→ 0.62 处回到全幅 → 末尾极缓推进，避免静止
@@ -136,13 +138,13 @@ export function FiberFormation({params, theme}: SceneProps) {  const p = params 
   return (
     <div style={{position: 'absolute', inset: 0}}>
       {/* 满幅底板：盖住工程层缩放后露出的两侧留白 */}
-      <div style={{position: 'absolute', inset: '-16%', background: '#d3c3a4'}} />
+      <div style={{position: 'absolute', inset: '-16%', background: pal.page}} />
       <svg style={{position: 'absolute', inset: 0}} width="100%" height="100%" viewBox={`0 0 ${W} ${H}`}>
         <defs>
           <linearGradient id="ff-paper" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#f6eedf" />
-            <stop offset="0.55" stopColor="#efddc5" />
-            <stop offset="1" stopColor="#e2d3b7" />
+            <stop offset="0" stopColor={pal.paperHi} />
+            <stop offset="0.55" stopColor={pal.paperMid} />
+            <stop offset="1" stopColor={pal.paperLo} />
           </linearGradient>
           {/* 纸面显影：0 到水线之间是纸，水线之后仍是空的帘 */}
           <linearGradient id="ff-sweep" x1="0" y1="0" x2="1" y2="0">
@@ -153,19 +155,19 @@ export function FiberFormation({params, theme}: SceneProps) {  const p = params 
           </linearGradient>
           {/* 湿痕：水线处一层暖色反光 */}
           <linearGradient id="ff-wet" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stopColor="#b9946a" stopOpacity="0" />
-            <stop offset="0.62" stopColor="#b9946a" stopOpacity="0.28" />
-            <stop offset="1" stopColor="#8c6a45" stopOpacity="0.12" />
+            <stop offset="0" stopColor={pal.spot} stopOpacity="0" />
+            <stop offset="0.62" stopColor={pal.spot} stopOpacity="0.28" />
+            <stop offset="1" stopColor={pal.edge} stopOpacity="0.12" />
           </linearGradient>
           <mask id="ff-sweepmask" maskUnits="userSpaceOnUse" x={SHEET.x} y={SHEET.y} width={SHEET.w} height={SHEET.h}>
             <rect x={SHEET.x} y={SHEET.y} width={SHEET.w} height={SHEET.h} fill="url(#ff-sweep)" />
           </mask>
-          <radialGradient id="ff-vignette" cx="0.5" cy="0.48" r="0.8">            <stop offset="0.52" stopColor="#4a3826" stopOpacity="0" />
-            <stop offset="1" stopColor="#4a3826" stopOpacity="0.26" />
+          <radialGradient id="ff-vignette" cx="0.5" cy="0.48" r="0.8">            <stop offset="0.52" stopColor={pal.vignette} stopOpacity="0" />
+            <stop offset="1" stopColor={pal.vignette} stopOpacity="0.26" />
           </radialGradient>
           <radialGradient id="ff-table" cx="0.5" cy="0.5" r="0.62">
-            <stop offset="0" stopColor="#8b7554" stopOpacity="0.24" />
-            <stop offset="1" stopColor="#8b7554" stopOpacity="0" />
+            <stop offset="0" stopColor={pal.shadow} stopOpacity="0.24" />
+            <stop offset="1" stopColor={pal.shadow} stopOpacity="0" />
           </radialGradient>
           <filter id="ff-grain" x="0" y="0" width="100%" height="100%">
             <feTurbulence type="fractalNoise" baseFrequency="0.92" numOctaves="3" seed="7" result="n" />
@@ -186,7 +188,7 @@ export function FiberFormation({params, theme}: SceneProps) {  const p = params 
         </defs>
 
         {/* 桌面与纸下投影 */}
-        <rect width={W} height={H} fill="#d3c3a4" />
+        <rect width={W} height={H} fill={pal.page} />
         <ellipse cx="640" cy="600" rx="556" ry="112" fill="url(#ff-table)" />
 
         <g transform={`translate(${camX} ${camY}) rotate(${camRot}) scale(${camScale}) translate(-${camX} -${camY})`}>
@@ -199,7 +201,7 @@ export function FiberFormation({params, theme}: SceneProps) {  const p = params 
                 y1={l.y}
                 x2={l.x + Math.cos((l.rot * Math.PI) / 180) * l.len}
                 y2={l.y + Math.sin((l.rot * Math.PI) / 180) * l.len}
-                stroke="#8a7350"
+                stroke={pal.fiber}
                 strokeWidth={l.w}
                 opacity={l.a}
               />
@@ -226,7 +228,7 @@ export function FiberFormation({params, theme}: SceneProps) {  const p = params 
                 <path
                   key={i}
                   d={strandPath(f, x, y, rot, len)}
-                  stroke="#7a6244"
+                  stroke={pal.fiberAlt}
                   strokeWidth={f.w}
                   strokeOpacity={clamp01(alpha)}
                   fill="none"
@@ -239,13 +241,13 @@ export function FiberFormation({params, theme}: SceneProps) {  const p = params 
           {/* 水线湿痕 */}
           <g clipPath="url(#ff-clip)" opacity={wetOpacity} transform={`translate(${frontX - 300} 0)`}>
             <rect x="0" y={SHEET.y} width="300" height={SHEET.h} fill="url(#ff-wet)" />
-            <line x1="300" y1={SHEET.y} x2="300" y2={SHEET.y + SHEET.h} stroke="#7e5f3c" strokeWidth="1.4" opacity="0.4" filter="url(#ff-soft)" />
+            <line x1="300" y1={SHEET.y} x2="300" y2={SHEET.y + SHEET.h} stroke={pal.fiberAlt} strokeWidth="1.4" opacity="0.4" filter="url(#ff-soft)" />
           </g>
 
           {/* 纸内细纤维点 */}
           <g clipPath="url(#ff-clip)" mask="url(#ff-sweepmask)">
             {SPECKS.map((d, i) => (
-              <circle key={i} cx={d.x} cy={d.y} r={d.r} fill="#7d6549" opacity={d.a} />
+              <circle key={i} cx={d.x} cy={d.y} r={d.r} fill={pal.grain} opacity={d.a} />
             ))}
           </g>
 
@@ -258,7 +260,7 @@ export function FiberFormation({params, theme}: SceneProps) {  const p = params 
                 y1={l.y}
                 x2={l.x + Math.cos((l.rot * Math.PI) / 180) * l.len}
                 y2={l.y + Math.sin((l.rot * Math.PI) / 180) * l.len}
-                stroke="#7c6549"
+                stroke={pal.weave}
                 strokeWidth="0.7"
                 strokeOpacity={l.a}
               />
@@ -266,8 +268,8 @@ export function FiberFormation({params, theme}: SceneProps) {  const p = params 
           </g>
 
           {/* 纸边与压痕 */}
-          <path d={DECKLE} fill="none" stroke="#a89272" strokeWidth="1.1" opacity={0.5 * frontNorm} />
-          <path d={DECKLE} fill="none" stroke="#fffaf0" strokeWidth="0.7" opacity={0.45 * frontNorm} transform="translate(0.7 0.7)" />
+          <path d={DECKLE} fill="none" stroke={pal.edge} strokeWidth="1.1" opacity={0.5 * frontNorm} />
+          <path d={DECKLE} fill="none" stroke={pal.deckleHi} strokeWidth="0.7" opacity={0.45 * frontNorm} transform="translate(0.7 0.7)" />
 
           {/* 标题 */}
           <g opacity={1 - easeInOut(seg(prog, 0.8, 0.92))}>
