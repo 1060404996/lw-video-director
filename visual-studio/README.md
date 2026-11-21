@@ -46,10 +46,9 @@ npm run dev
 npm run build
 npm test  # 自动管理独立测试服务器，无需预先启动工作台
 npm run render -- CAM-001
-$env:LW_REVIEW_DIR='test-results/v02-r3'
-node tests/verify-v02.mjs
-node tests/custom-inputs.mjs
-python -B tests/audit-v02.py # 需要原项目已有 PyAV/NumPy/Pillow
+python -m pip install -r tests/requirements-media.txt
+$env:LW_REVIEW_DIR='test-results/my-new-review' # 使用不存在或为空的目录
+npm run test:media
 ```
 
 验证脚本输出为可再生成产物，请使用新的输出目录保护既有审阅证据。0.1 原始素材、0.2 视频、15 张主题组合帧、极端参数/输入测试、截图和失败记录已另行归档，本次发布前摘要见 [RELEASE-CHECKS.md](RELEASE-CHECKS.md)；历史完整日志/失败记录保存在独立本地验收资料中，不打包进源码。
@@ -88,3 +87,28 @@ node tests/render-transition-themes.mjs test-results/theme-transitions
 Vite 从 7.2.2 升级并精确锁定至兼容的 7.3.8，package-lock.json 同步更新。该版本覆盖本次审计发现的风险；修复版本依据官方公告：https://github.com/vitejs/vite/security/advisories/GHSA-p4f5-76q4-ffq7 。实际 npm ci、npm test、npm audit 已执行；15 项快速测试通过，审计 0 漏洞（仅代表执行时 npm 公告数据库结果）。五个原创组件和 MP-001 均经实际 API 渲染/下载回归。
 
 发布应使用此目录 package.json 的 0.2.0 版本和现有锁文件，不使用旧验收快照。根仓库的通用媒体/JSON 忽略规则由本目录 .gitignore 对必要源码文件显式豁免；依赖、构建产物、缓存、exports 和旧测试输出继续排除。全部外部来源、许可和本地可执行状态保存在 external/，不得遗漏。
+
+
+## 从全新克隆执行完整验收（P2 修复）
+
+前提：Node.js 24、npm、Python 3.12+，以及 Chrome/WebGL。Windows 非标准 Chrome 路径用 `LW_BROWSER` 指定；其他平台请按实际安装位置配置。Python 可用 `LW_PYTHON` 指定。本命令不依赖历史验收目录或手工图片。
+
+```powershell
+cd visual-studio
+npm ci
+npm test
+npm audit
+npm run build
+python -m pip install -r tests/requirements-media.txt
+$env:LW_REVIEW_DIR='test-results/review-unique-name'
+# 如有需要：$env:LW_BROWSER='浏览器可执行文件绝对路径'
+npm run test:media
+```
+
+macOS/Linux 将环境变量一行替换为 `LW_REVIEW_DIR=test-results/review-unique-name npm run test:media`。每轮使用新目录；完整入口拒绝非空目录，避免混用旧证据。相对输出路径统一以 visual-studio 为基准，也支持绝对路径。
+
+完整入口依次执行 verify-v02、refine-v02、custom-inputs 和 audit-v02：生成五个原创组件、三主题定点图、极端参数图、景深/颜色测试图、MP-001 两种适配视频、原创双图片转场及自定义图表。refine 不再复制历史 v02-r2，custom-inputs 独立生成两张输入图。独立脚本使用相同 LW_REVIEW_DIR；它们可单独调试，但一键验收入口负责隔离每轮证据。
+
+输出含 9 段 MP4、全部 PNG、各阶段日志、full-results.json、custom-inputs.json、media-audit.json 和 run.json。run.json 记录运行编号、时间、环境、Git 基线/工作区状态、源码 SHA-256、阶段退出码及产物 SHA-256。任何阶段失败均返回非零；媒体清单缺失或多出视频也会失败。媒体验收检查逐帧解码、帧数/尺寸/帧率、时间戳间隔、黑帧、动态变化、景深和强调色，不替代人工审美验收或跨 GPU 保证。
+
+`npm test` 新增中文标题/字幕、2/3/4 字节字符跨块、160/180 字符边界、9MB 字节边界及无效 JSON/UTF-8 回归。HTTP 回归直接复用服务端解析和校验函数，不启动昂贵的视频渲染；真实渲染由上述完整入口执行。

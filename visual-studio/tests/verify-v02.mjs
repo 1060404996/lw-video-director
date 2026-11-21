@@ -2,7 +2,7 @@ import fs from 'node:fs';import path from 'node:path';
 import {renderVideo,renderReference,still} from '../render.mjs';
 import {defaultsFor} from '../src/catalog/validation.mjs';
 import manifest from '../src/catalog/manifest.json' with {type:'json'};
-const out=path.resolve(process.env.LW_REVIEW_DIR||'test-results/v02');fs.mkdirSync(out,{recursive:true});
+import {reviewDir as out} from './review-dir.mjs';
 const results=[];
 for(const c of manifest.components){const props={componentId:c.id,theme:c.id==='TYPE-001'?'swiss':c.id==='INFO-001'?'archive':'future',params:defaultsFor(c.id)};try{await renderVideo(props,path.join(out,`${c.id}.mp4`));for(const frame of [0,15,30,60,90,105,119])await still(props,frame,path.join(out,`${c.id}-${frame}.png`));results.push({id:c.id,status:'passed',props});console.log('PASS',c.id)}catch(e){results.push({id:c.id,status:'failed',error:e.message});console.error('FAIL',c.id,e.stack)}fs.writeFileSync(path.join(out,'render-results.json'),JSON.stringify(results,null,2));}
 for(const theme of manifest.styles)for(const id of manifest.components.map(c=>c.id)){try{await still({componentId:id,theme,params:defaultsFor(id)},60,path.join(out,`${id}-${theme}.png`));console.log('THEME',id,theme)}catch(e){results.push({id,theme,status:'failed',error:e.message})}}

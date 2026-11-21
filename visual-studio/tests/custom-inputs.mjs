@@ -1,5 +1,10 @@
 import fs from 'node:fs';import path from 'node:path';import {renderVideo,still} from '../render.mjs';import {defaultsFor,validateProps} from '../src/catalog/validation.mjs';
-const out='test-results/v02-r3';const image=p=>'data:image/png;base64,'+fs.readFileSync(p).toString('base64');
+import {reviewDir as out} from './review-dir.mjs';
+// Generate original test inputs in this run, even when invoked independently.
+for (const [id,theme] of [['TYPE-001','swiss'],['INFO-001','archive']]) {
+ await still({componentId:id,theme,params:defaultsFor(id)},60,path.join(out,`${id}-${theme}.png`));
+}
+const image=p=>'data:image/png;base64,'+fs.readFileSync(p).toString('base64');
 const props=validateProps({componentId:'TRANS-001',theme:'archive',params:{...defaultsFor('TRANS-001'),imageBefore:image(path.join(out,'TYPE-001-swiss.png')),imageAfter:image(path.join(out,'INFO-001-archive.png'))}});
 await renderVideo(props,path.join(out,'TRANS-custom-images.mp4'));for(const frame of [0,105,119])await still(props,frame,path.join(out,`TRANS-custom-images-${frame}.png`));
 const chart={componentId:'INFO-001',theme:'swiss',params:{...defaultsFor('INFO-001'),title:'真实输入接口验证 · 测试夹具',chartData:[{label:'北区',value:-20},{label:'华东',value:46.5},{label:'海外',value:89}],unit:'万元',dataSource:'人工测试输入；不代表实际业务数据'}};
