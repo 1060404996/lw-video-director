@@ -11,6 +11,7 @@ description: Analyze reference videos, plan shots and camera motion, build MG/3D
 
 - 拆解参考片或更新知识库：读 [学习方法](references/study-method.md)，再按需读 [案例索引](references/case-index.md)、[导演与叙事](references/cinematography-and-story.md)、[动效与转场](references/motion-and-transitions.md)、[音频与字幕](references/audio-and-subtitles.md)。
 - 制作原创视频：先读 [工作流与验收](references/workflow-and-qa.md)，提交需求理解、叙事大纲、分镜及技术方案；得到明确制作指令后才渲染成片。选最简单且可重复的工具，依赖按本机版本核实。
+- 要把口播音频直接做成带画面/音轨/字幕的成片：读 [成片管线](references/production-pipeline.md)，在 `visual-studio/` 写 `project.json`，用 `npm run lint:project` 校验、`npm run direct` 出片。音效走 `npm run sfx` 代码合成，不引第三方音频。
 - 设计动效、运镜或场景组件时，先读 [外部视觉库接入规范](references/external-libraries.md)：按需检索 Motion Prompt 的动作术语/逐帧示例，以及 FredTalk 的公开场景组件；外部库是候选来源，不是强制风格。
 - 分析或制作过程中需更新知识时，保留原始证据、日期和版本记录；不静默改写全局 Skill。用户明确要求更新时才修改项目知识库或本 Skill。
 
