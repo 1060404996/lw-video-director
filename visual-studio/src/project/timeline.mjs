@@ -1,29 +1,29 @@
 /**
- * timeline.mjs — 成片时间轴引擎（Node CLI 与 Remotion 渲染共用同一份计算）
+ * timeline.mjs — 整片时间轴引擎（Node CLI 与 Remotion 渲染共用同一份计算）
  *
- * 单位约定：对外一律秒，进渲染前统一换成帧（frames = round(sec * fps)）。
- * 这是项目规则第 5 条的落点：时间只在这里换算一次，别处不再出现第二套换算。
+ * 单位约定：对外一律秒，落帧后全部取整（frames = round(sec * fps)）。
+ * 项目规则第 5 条：时间只在这里换算一次，别处不再出现第二套换算。
+ *
+ * 兼容两种输入：
+ *  1) project.json —— 顺序式，场景给时长/文本，转场重叠自动算；
+ *  2) episode.json —— 帧精确式，场景带 startFrame/durationFrames/componentId/props，
+ *     直接按给定帧排布，不做重叠（与 episode_preflight.py 的契约一致）。
  */
 export const DEFAULT_FPS = 30;
 export const TRANSITIONS = ['cut', 'fade', 'slide', 'zoom', 'wipe'];
-export const SAFE_MARGIN = 0.075; // 字幕安全区：底部留白占画面高度比例
+export const SAFE_MARGIN = 0.075;
 
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
 const round = Math.round;
 
-/** 参数自带时长（entrance+hold+exit）：没有显式 duration 时的兜底 */
 export function paramSeconds(params = {}) {
   const {entrance = 1, hold = 2, exit = 1} = params;
   return Math.max(0.2, entrance + hold + exit);
 }
 
-/** 文字权重：中文按 1，ASCII 按 0.56（与 shared.ts 的 wrapText 口径一致） */
 const unit = (ch) => (/[\u0000-\u00ff]/.test(ch) ? 0.56 : 1);
 
-/**
- * 语义断行：优先在标点处断开，其次按字数均分，每行 ≤ maxUnits，最多 maxLines 行。
- * 单行超长时保留尾部省略号，避免字幕被截断到看不出内容。
- */
+/** 语义断行：优先标点，其次按字数均分；每行 ≤ maxUnits，最多 maxLines 行 */
 export function breakCaption(text, maxUnits = 12, maxLines = 2) {
   const clean = String(text ?? '').replace(/\s+/g, ' ').trim();
   if (!clean) return [''];
@@ -49,7 +49,6 @@ export function breakCaption(text, maxUnits = 12, maxLines = 2) {
       wide = w;
       continue;
     }
-    // 单段仍然超长：硬切
     let buf = '';
     let bw = 0;
     for (const ch of [...seg]) {
@@ -73,7 +72,6 @@ export function breakCaption(text, maxUnits = 12, maxLines = 2) {
   return lines.length ? lines : [''];
 }
 
-/** 解析 SRT：容错 CRLF、缺失序号、逗号/句点毫秒分隔符 */
 export function parseSrt(raw) {
   const text = String(raw ?? '').replace(/\r/g, '');
   const blocks = text.split(/\n{2,}/).filter((b) => b.trim());
@@ -104,9 +102,7 @@ export function formatSrt(cues) {
     const h = Math.floor(sec / 3600);
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')},${String(ms).padStart(3, '0')}`;
   };
-  return cues
-    .map((c, i) => `${i + 1}\n${stamp(c.start)} --> ${stamp(c.end)}\n${c.text}\n`)
-    .join('\n');
+  return cues.map((c, i) => `${i + 1}\n${stamp(c.start)} --> ${stamp(c.end)}\n${c.text}\n`).join('\n');
 }
 
 const asTrack = (v, fallbackVolume) => {
@@ -115,11 +111,28 @@ const asTrack = (v, fallbackVolume) => {
   return {volume: fallbackVolume, fadeIn: 0, fadeOut: 0, start: 0, ...v};
 };
 
+/** episode.json 与 project.json 的字段名统一成一种场景规格 */
+const normalizeScene = (s, i, fps) => ({
+  id: s.id ?? `s${i + 1}`,
+  component: s.component ?? s.componentId,
+  params: s.params ?? s.props ?? {},
+  theme: s.theme,
+  text: s.text ?? s.narrationText ?? '',
+  caption: s.caption ?? s.narrationText ?? s.text ?? '',
+  vo: s.vo ?? null,
+  voDuration: isNum(s.voDuration) ? s.voDuration : null,
+  duration: isNum(s.duration) ? s.duration : isNum(s.durationFrames) ? s.durationFrames / fps : null,
+  startFrame: isNum(s.startFrame) ? s.startFrame : null,
+  tail: isNum(s.tail) ? s.tail : 0,
+  transition: s.transition ?? {type: 'cut', duration: 0},
+});
+
 /**
- * 构建时间轴。输入 project 对象，输出渲染与校验共用的快照：
- * 场景绝对起点、转场重叠、音轨、字幕条（含已断行文本）。
+ * 构建时间轴快照。
  *
- * 时长优先级：scene.duration > 按口播时长按字数比例分配 > 组件参数时长。
+ * 时长优先级（顺序式）：scene.duration > 单镜配音实测时长（+0.2s 余量，画面同时吃下转场前导）
+ * > 按字数比例分口播总时长 > 组件参数时长。
+ * 帧精确式（任一场景带 startFrame）直接照搬给定帧，不做重叠。
  */
 export function buildTimeline(project = {}) {
   const meta = project.meta ?? {};
@@ -127,73 +140,105 @@ export function buildTimeline(project = {}) {
   const width = isNum(meta.width) ? meta.width : 1920;
   const height = isNum(meta.height) ? meta.height : 1080;
   const theme = meta.theme ?? 'future';
-  const scenesIn = Array.isArray(project.scenes) ? project.scenes : [];
+  const scenesIn = (Array.isArray(project.scenes) ? project.scenes : []).map((s, i) => normalizeScene(s, i, fps));
   const voDur = isNum(project.voDuration) ? project.voDuration : isNum(meta.voDuration) ? meta.voDuration : null;
+  const precise = scenesIn.some((s) => s.startFrame !== null);
 
-  // 1. 场景时长
-  const explicit = scenesIn.map((s) => (isNum(s.duration) && s.duration > 0 ? s.duration : null));
-  const fixedSum = explicit.reduce((s, v) => s + (v ?? 0), 0);
-  const weighted = scenesIn.map((s) => {
-    const w = [...String(s.text ?? s.caption ?? '')].reduce((a, c) => a + unit(c), 0);
-    return w > 0 ? w : 1;
-  });
-  const weightSum = weighted.reduce((a, b) => a + b, 0) || 1;
-  const freeBudget = voDur && project.timing === 'vo' ? Math.max(0.5, voDur - fixedSum) : null;
+  let scenes = [];
+  let totalFrames = 0;
 
-  const durations = scenesIn.map((s, i) => {
-    if (explicit[i]) return explicit[i];
-    if (freeBudget !== null) return Math.max(1 / fps, (freeBudget * weighted[i]) / weightSum);
-    return paramSeconds(s.params);
-  });
+  if (precise) {
+    let cursor = 0;
+    scenes = scenesIn.map((s) => {
+      const from = s.startFrame !== null ? s.startFrame : cursor;
+      const duration = Math.max(1, round((s.duration ?? paramSeconds(s.params)) * fps));
+      cursor = from + duration;
+      return {
+        ...s,
+        theme: s.theme ?? theme,
+        from,
+        duration,
+        prevOverlap: 0,
+        nextOverlap: 0,
+        startSec: from / fps,
+        endSec: (from + duration) / fps,
+      };
+    });
+    totalFrames = Math.max(1, cursor);
+  } else {
+    const explicit = scenesIn.map((s) => (s.duration ? round(s.duration * fps) : null));
+    const fixedSum = explicit.reduce((a, v) => a + (v ?? 0), 0) / fps;
+    const weight = scenesIn.map((s) => [...String(s.text ?? '')].reduce((a, c) => a + unit(c), 0) || 1);
+    const wSum = weight.reduce((a, b) => a + b, 0) || 1;
+    const freeBudget = voDur && project.timing === 'vo' && !scenesIn.some((s) => s.vo) ? Math.max(0.5, voDur - fixedSum) : null;
 
-  // 2. 转场重叠 + 绝对起点（全部在帧上取整，帧号必须是整数）
-  const durF = durations.map((d) => Math.max(1, round(d * fps)));
-  const overlapF = scenesIn.map((s, i) => {
-    if (i === 0) return 0;
-    const t = s.transition ?? {type: 'cut', duration: 0};
-    if (!t || t.type === 'cut' || !isNum(t.duration) || t.duration <= 0) return 0;
-    return Math.min(round(t.duration * fps), Math.floor(durF[i - 1] / 2), Math.floor(durF[i] / 2));
-  });
+    const durF = [];
+    const overlapF = [];
+    scenesIn.forEach((s, i) => {
+      let o = 0;
+      if (i > 0 && s.transition && s.transition.type !== 'cut' && isNum(s.transition.duration) && s.transition.duration > 0) {
+        o = Math.min(round(s.transition.duration * fps), Math.floor(durF[i - 1] / 2));
+      }
+      overlapF[i] = o;
+      let d;
+      if (explicit[i]) d = explicit[i];
+      else if (s.voDuration) d = round((s.voDuration + 0.2 + s.tail) * fps) + o;
+      else if (freeBudget !== null) d = Math.max(1, round(((freeBudget * weight[i]) / wSum) * fps));
+      else d = round(paramSeconds(s.params) * fps);
+      durF[i] = Math.max(1, d);
+    });
 
-  let cursor = 0;
-  const scenes = scenesIn.map((s, i) => {
-    const duration = durF[i];
-    const from = cursor - overlapF[i];
-    const startSec = from / fps;
-    cursor = from + duration;
-    return {
-      id: s.id ?? `s${i + 1}`,
-      component: s.component,
-      params: s.params ?? {},
-      theme: s.theme ?? theme,
-      text: s.text ?? '',
-      caption: s.caption ?? s.text ?? '',
-      transition: s.transition ?? {type: 'cut', duration: 0},
-      from,
-      duration,
-      prevOverlap: overlapF[i],
-      nextOverlap: overlapF[i + 1] ?? 0,
-      startSec,
-      endSec: (from + duration) / fps,
-    };
-  });
-  const totalFrames = Math.max(1, cursor);
+    let cursor = 0;
+    scenes = scenesIn.map((s, i) => {
+      const from = cursor - overlapF[i];
+      cursor = from + durF[i];
+      return {
+        ...s,
+        theme: s.theme ?? theme,
+        from,
+        duration: durF[i],
+        prevOverlap: overlapF[i],
+        nextOverlap: overlapF[i + 1] ?? 0,
+        startSec: from / fps,
+        endSec: (from + durF[i]) / fps,
+      };
+    });
+    totalFrames = Math.max(1, cursor);
+  }
 
-  // 3. 音频轨（口播 / BGM / 音效点位）
+  // 音轨
   const audioIn = project.audio ?? {};
   const vo = asTrack(audioIn.vo, 1);
-  const bgm = (Array.isArray(audioIn.bgm) ? audioIn.bgm : audioIn.bgm ? [audioIn.bgm] : [])
-    .map((t) => asTrack(t, 0.18))
-    .filter(Boolean);
+  const bgm = (Array.isArray(audioIn.bgm) ? audioIn.bgm : audioIn.bgm ? [audioIn.bgm] : []).map((t) => asTrack(t, 0.18)).filter(Boolean);
+
+  // 分镜配音：起点在画面转场完成之后，避免两句叠着说
+  const voSegments = scenes
+    .filter((s) => s.vo)
+    .map((s) => {
+      const from = s.from + s.prevOverlap;
+      const duration = Math.max(1, round(((s.voDuration ?? s.duration / fps) + 0.05) * fps));
+      return {
+        src: s.vo,
+        sceneId: s.id,
+        from,
+        duration: Math.max(1, Math.min(duration, totalFrames - from)),
+        volume: 1,
+      };
+    })
+    .filter((s) => s.duration > 0);
+
   const sfxEvents = (Array.isArray(project.sfx) ? project.sfx : [])
-    .filter((e) => e && typeof e.name === 'string' && isNum(e.at))
+    .filter((e) => e && typeof e.name === 'string' && (isNum(e.at) || typeof e.anchor === 'string'))
     .map((e) => {
       const name = e.name.replace(/\.wav$/i, '');
+      // 优先按镜头锚点定位：配音时长变化后音效仍贴着画面走
+      const anchorScene = typeof e.anchor === 'string' ? scenes.find((s) => s.id === e.anchor) : null;
+      const at = anchorScene ? (anchorScene.from + Math.round((isNum(e.offset) ? e.offset : 0) * fps)) / fps : e.at;
       return {
         name,
         src: `sfx/${name}.wav`,
-        from: round(e.at * fps),
-        at: e.at,
+        from: round(at * fps),
+        at: +at.toFixed(3),
         volume: isNum(e.volume) ? e.volume : 0.8,
         anchor: e.anchor ?? null,
       };
@@ -211,18 +256,24 @@ export function buildTimeline(project = {}) {
       }
     : null;
 
-  // 4. 字幕：显式 cues > SRT 解析 > 场景文本
+  // 字幕：显式 cues > 场景文本（有分镜配音就贴在配音起止上）
   const subIn = project.subtitles ?? {};
   const maxUnits = isNum(subIn.maxCharsPerLine) ? subIn.maxCharsPerLine : 12;
   let cues = [];
   if (Array.isArray(subIn.cues) && subIn.cues.length) {
     cues = subIn.cues;
-  } else if (scenes.some((s) => String(s.caption).trim())) {
+  } else {
     cues = scenes
       .filter((s) => String(s.caption).trim())
-      .map((s) => ({start: s.startSec, end: s.endSec - 0.08, text: s.caption}));
+      .map((s) => {
+        if (s.vo && s.voDuration) {
+          const st = (s.from + s.prevOverlap) / fps;
+          return {start: st, end: st + s.voDuration + 0.05, text: s.caption};
+        }
+        return {start: s.startSec, end: s.endSec - 0.08, text: s.caption};
+      });
   }
-  // 字幕条在转场重叠区会互相压住：前一条收缩到下一条起点前 0.05s
+
   cues = cues
     .slice()
     .sort((a, b) => a.start - b.start)
@@ -232,16 +283,17 @@ export function buildTimeline(project = {}) {
       return {...c, end: Math.max(c.start + 0.2, hardEnd)};
     });
 
-  const subtitleCues = subIn.enabled === false
-    ? []
-    : cues
-        .map((c) => {
-          const from = round(c.start * fps);
-          const to = round(c.end * fps);
-          const duration = Math.max(1, Math.min(to, totalFrames) - from);
-          return {from, duration, start: c.start, end: c.end, text: String(c.text).trim(), lines: breakCaption(c.text, maxUnits, 2)};
-        })
-        .filter((c) => c.duration > 0 && c.from < totalFrames);
+  const subtitleCues =
+    subIn.enabled === false
+      ? []
+      : cues
+          .map((c) => {
+            const from = round(c.start * fps);
+            const to = round(c.end * fps);
+            const duration = Math.max(1, Math.min(to, totalFrames) - from);
+            return {from, duration, start: c.start, end: c.end, text: String(c.text).trim(), lines: breakCaption(c.text, maxUnits, 2)};
+          })
+          .filter((c) => c.duration > 0 && c.from < totalFrames);
 
   return {
     fps,
@@ -250,8 +302,9 @@ export function buildTimeline(project = {}) {
     theme,
     totalFrames,
     totalSeconds: +(totalFrames / fps).toFixed(3),
+    precise,
     scenes,
-    audio: {vo: voTrack, bgm, sfx: sfxEvents},
+    audio: {vo: voTrack, voSegments, bgm, sfx: sfxEvents},
     subtitles: {
       enabled: subIn.enabled !== false && subtitleCues.length > 0,
       cues: subtitleCues,
@@ -260,9 +313,10 @@ export function buildTimeline(project = {}) {
   };
 }
 
-/** 场景内的本地相位：转场进/出各占多少帧（渲染与 lint 共用） */
+/** 场景内的本地相位：进/出转场各占多少帧 */
 export function transitionPhase(scene) {
-  const inF = Math.min(scene.prevOverlap, Math.floor(scene.duration * 0.5));
-  const outF = Math.min(scene.nextOverlap, Math.floor(scene.duration * 0.5));
-  return {inF, outF};
+  return {
+    inF: Math.min(scene.prevOverlap, Math.floor(scene.duration * 0.5)),
+    outF: Math.min(scene.nextOverlap, Math.floor(scene.duration * 0.5)),
+  };
 }

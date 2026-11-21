@@ -88,7 +88,7 @@ async function main() {
     }
   }
 
-  // 2. BGM / 头像素材同步
+  // 2. BGM / 分镜配音素材同步
   const bgm = resolved.audio?.bgm;
   if (bgm) {
     resolved.audio.bgm = (Array.isArray(bgm) ? bgm : [bgm]).map((t, i) => {
@@ -96,6 +96,12 @@ async function main() {
       return {...o, src: syncAsset(baseDir, o.src, slug, `bgm${i + 1}`)};
     });
   }
+  resolved.scenes = (resolved.scenes ?? []).map((s, i) => {
+    if (!s.vo) return s;
+    const abs = /^(https?:|data:)/.test(s.vo) ? null : path.resolve(baseDir, s.vo);
+    const voDuration = s.voDuration ?? (abs ? probe(abs) : null);
+    return {...s, vo: syncAsset(baseDir, s.vo, slug, `vo-${s.id ?? i + 1}`), voDuration: voDuration ?? s.voDuration};
+  });
 
   // 3. SRT → cues（字幕只走 SRT 或显式 cues，不做文本轨硬拼）
   const sub = resolved.subtitles ?? {};
@@ -174,6 +180,19 @@ async function main() {
     },
   });
   console.log(`\n成片 ${output}  (${((Date.now() - started) / 1000).toFixed(1)}s)`);
+
+  // 响度规范化（默认开启）：抖音/视频号目标 -16 LUFS 左右；音频重编码，画面直接拷贝
+  if (!has('no-loudnorm')) {
+    const tmp = output.replace(/\.mp4$/, '.norm.mp4');
+    const r = spawnSync('ffmpeg', ['-y', '-v', 'error', '-i', output, '-c:v', 'copy', '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-c:a', 'aac', '-b:a', '192k', tmp], {encoding: 'utf8'});
+    if (r.status === 0 && fs.existsSync(tmp)) {
+      fs.renameSync(tmp, output);
+      console.log('音频已规范化到 -16 LUFS');
+    } else {
+      if (fs.existsSync(tmp)) fs.unlinkSync(tmp);
+      console.log(`响度规范化跳过：${(r.stderr || '').slice(0, 200)}`);
+    }
+  }
 }
 
 main().catch((e) => {

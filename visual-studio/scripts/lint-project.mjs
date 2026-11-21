@@ -82,7 +82,9 @@ export function lintProject(project, {publicDir = path.join(ROOT, 'public'), bas
 
   // 6. 音频与音效
   const audio = project.audio ?? {};
-  if (!audio.vo && !audio.bgm) warnings.push('没有任何音轨，成片将是静音');
+  const hasSceneVo = scenes.some((s) => s.vo);
+  if (!audio.vo && !audio.bgm && !hasSceneVo) warnings.push('没有任何音轨，成片将是静音');
+  const sceneIds = new Set(scenes.map((s, i) => s.id ?? `s${i + 1}`));
   const sfxManifestPath = path.join(publicDir, 'sfx', 'manifest.json');
   const sfxNames = fs.existsSync(sfxManifestPath)
     ? new Set(Object.keys(JSON.parse(fs.readFileSync(sfxManifestPath, 'utf8'))))
@@ -91,8 +93,10 @@ export function lintProject(project, {publicDir = path.join(ROOT, 'public'), bas
     if (!sfxNames.has(String(e.name).replace(/\.wav$/i, ''))) {
       errors.push(`音效 ${e.name} 不在 public/sfx（先跑 npm run sfx）`);
     }
-    if (typeof e.at !== 'number' || e.at < 0) errors.push(`音效 ${e.name} 的时间点无效`);
-    if (typeof e.at === 'number' && e.at > timeline.totalSeconds) warnings.push(`音效 ${e.name} 落在 ${e.at}s，超出成片末尾`);
+    const at = typeof e.at === 'number' ? e.at : timeline.audio.sfx.find((x) => x.name === e.name && x.anchor === e.anchor)?.at;
+    if (typeof at !== 'number' || at < 0) errors.push(`音效 ${e.name} 的时间点无效（需要 at 秒数或 anchor 镜头 id）`);
+    if (typeof e.anchor === 'string' && !sceneIds.has(e.anchor)) errors.push(`音效 ${e.name} 锚定的镜头 ${e.anchor} 不存在`);
+    if (typeof at === 'number' && at > timeline.totalSeconds) warnings.push(`音效 ${e.name} 落在 ${at}s，超出成片末尾`);
   });
 
   // 7. 素材存在性（本地路径：既可能已在 public 下，也可能是工程目录里的相对路径）
@@ -104,6 +108,7 @@ export function lintProject(project, {publicDir = path.join(ROOT, 'public'), bas
     if (!candidates.some((p) => fs.existsSync(p))) errors.push(`${label} 素材不存在：${candidates.join(' 或 ')}`);
   };
   if (audio.vo) checkAsset(typeof audio.vo === 'string' ? audio.vo : audio.vo.src, '口播');
+  scenes.forEach((s) => s.vo && checkAsset(s.vo, `分镜 ${s.id ?? ''} 配音`));
   (Array.isArray(audio.bgm) ? audio.bgm : audio.bgm ? [audio.bgm] : []).forEach((b) => checkAsset(typeof b === 'string' ? b : b.src, 'BGM'));
 
   return {errors, warnings, timeline};

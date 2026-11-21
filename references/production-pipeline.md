@@ -11,8 +11,18 @@
 | 出成片 | `npm run direct -- projects/demo/project.json --out exports/x.mp4` | 1080p H.264 + AAC |
 | 只出一帧检查版式 | `npm run direct -- projects/demo/project.json --still 3.2` | `*-3.2s.png` |
 | 半分辨率快预览 | `npm run direct -- <project.json> --draft` | 960×540 成片 |
+| 逐镜合成口播（本地 7788） | `node visual-studio/scripts/narration_tts.mjs <project.json>` | `assets/vo-<镜>.mp3` + 回填实测时长 |
+| 关掉响度规范化 | `--no-loudnorm` | 保留原始音量 |
 
-出片前会依次做：ffprobe 实测口播时长 → 素材复制进 `public/projects/<slug>/` → SRT 解析 → lint → 渲染 → 落盘 `build/<slug>/project.resolved.json`、`timeline.json`、`subtitles.srt`。
+出片前会依次做：ffprobe 实测分镜配音 → 素材复制进 `public/projects/<slug>/` → SRT 解析 → lint → 渲染 → 落盘 `build/<slug>/project.resolved.json`、`timeline.json`、`subtitles.srt`。渲染后默认用 ffmpeg 把音频规范到 -16 LUFS（画面直接拷贝，不重编码）。
+
+## 两种输入格式
+
+- `project.json`：顺序式。场景给 `duration` 或靠配音实测时长；转场重叠自动算。
+- `episode.json`：帧精确式。场景带 `startFrame`/`durationFrames`/`componentId`/`props` 时按给定帧排布，不做重叠，与 `episode_preflight.py` 的契约一致。
+
+关键差异：有配音的分镜，画面时长 = 配音实测 + 0.2s 余量 + 转场前导，配音从转场结束处起，避免两句叠着说。
+
 
 ## project.json
 

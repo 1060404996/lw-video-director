@@ -24,3 +24,8 @@ projects/
 asset-runtime.local.json
 *.sqlite
 *.sqlite-*
+
+# Local render outputs and QA frames
+visual-studio/build/
+visual-studio/exports/
+visual-studio/qa-papermaking/

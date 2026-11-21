@@ -10,8 +10,15 @@ import type {ProjectFile, TimelineScene} from './types';
 const resolveSrc = (src: string) =>
   /^(https?:|data:|blob:)/.test(src) ? src : staticFile(src.replace(/^\/+/, ''));
 
+/** 字幕条高度（渲染与画面缩放共用，保证画面底边正好压在条顶上） */
+const bandHeight = (timeline: ReturnType<typeof buildTimeline>) => {
+  const fontSize = Math.round(timeline.height * 0.042);
+  const bottom = Math.round(timeline.height * timeline.subtitles.safeBottom);
+  return Math.max(Math.round(fontSize * 1.32 * 2 + bottom + fontSize * 0.9), Math.round(timeline.height * 0.16));
+};
+
 /** 单场景：负责自身的进出转场（淡入淡出 / 竖向滑入 / 缩放 / 擦除） */
-const SceneTake: React.FC<{scene: TimelineScene}> = ({scene}) => {
+const SceneTake: React.FC<{scene: TimelineScene; contentScale: number}> = ({scene, contentScale}) => {
   const frame = useCurrentFrame();
   const {inF, outF} = transitionPhase(scene);
   const kind = scene.transition?.type ?? 'cut';
@@ -47,7 +54,10 @@ const SceneTake: React.FC<{scene: TimelineScene}> = ({scene}) => {
 
   return (
     <AbsoluteFill style={{opacity, transform, clipPath, overflow: 'hidden'}}>
-      <Scene componentId={scene.component} params={params} theme={scene.theme} />
+      {/* 画面整体等比缩到字幕条之上：组件底部标题/坐标不会被字幕压住 */}
+      <div style={{position: 'absolute', inset: 0, transform: `scale(${contentScale})`, transformOrigin: '50% 0%'}}>
+        <Scene componentId={scene.component} params={params} theme={scene.theme} />
+      </div>
     </AbsoluteFill>
   );
 };
@@ -82,19 +92,21 @@ const BgmTrack: React.FC<{
 /** 字幕层：底部安全区内，最多两行，进出行各 4 帧淡入淡出 */
 const SubtitleLayer: React.FC<{timeline: ReturnType<typeof buildTimeline>}> = ({timeline}) => {
   const style = themes[timeline.theme];
-  const fontSize = Math.round(timeline.height * 0.046);
+  const fontSize = Math.round(timeline.height * 0.042);
   const bottom = Math.round(timeline.height * timeline.subtitles.safeBottom);
+  const band = bandHeight(timeline);
 
   return (
     <AbsoluteFill style={{pointerEvents: 'none'}}>
-      {/* 字幕压底渐变：保证深色/浅色画面上都够对比度，也把字幕与组件页脚隔开 */}
+      {/* 下三分之一字幕条：panel 底色压住图表坐标与组件页脚，发丝线让覆盖显得是设计而不是遮挡 */}
       <AbsoluteFill
         style={{
-          background: `linear-gradient(to top, ${
-            timeline.theme === 'swiss' || timeline.theme === 'archive' ? 'rgba(255,255,255,.72)' : 'rgba(0,0,0,.6)'
-          } 0%, rgba(0,0,0,0) 24%)`,
           top: 'auto',
-          height: '26%',
+          height: band,
+          background: `${style.panel}F5`,
+          borderTop: `1px solid ${style.accent}66`,
+          boxShadow: `inset 0 1px 0 ${style.fg}12`,
+          backdropFilter: 'blur(6px)',
         }}
       />
       {timeline.subtitles.cues.map((cue, i) => (
@@ -120,7 +132,7 @@ const CueView: React.FC<{cue: {duration: number; lines: string[]}; fontSize: num
   );
   const rise = interpolate(frame, [0, 6], [12, 0], {extrapolateRight: 'clamp'});
   return (
-    <AbsoluteFill style={{justifyContent: 'flex-end', alignItems: 'center', paddingBottom: bottom, opacity}}>
+    <AbsoluteFill style={{justifyContent: 'flex-end', alignItems: 'center', paddingBottom: bottom - Math.round(fontSize * 0.35), opacity}}>
       <div style={{transform: `translateY(${rise}px)`, textAlign: 'center', fontFamily: font, color}}>
         {cue.lines.map((line, i) => (
           <div
@@ -130,7 +142,7 @@ const CueView: React.FC<{cue: {duration: number; lines: string[]}; fontSize: num
               lineHeight: 1.32,
               fontWeight: 600,
               letterSpacing: 0.5,
-              textShadow: '0 2px 10px rgba(0,0,0,.55), 0 0 2px rgba(0,0,0,.4)',
+              textShadow: '0 1px 2px rgba(0,0,0,.18)',
               padding: '0 .4em',
             }}
           >
@@ -144,14 +156,31 @@ const CueView: React.FC<{cue: {duration: number; lines: string[]}; fontSize: num
 
 export const ProjectVideo: React.FC<{project: ProjectFile}> = ({project}) => {
   const timeline = useMemo(() => buildTimeline(project), [project]);
+  const band = timeline.subtitles.enabled ? bandHeight(timeline) : 0;
+  const contentScale = band > 0 ? (timeline.height - band) / timeline.height : 1;
   const bg = themes[timeline.theme].bg;
   const vo = timeline.audio.vo;
+  // 口播覆盖区间：整条 vo 与分镜段落并起来，BGM 在这段里压低
+  const spans: [number, number][] = [
+    ...(vo ? [[vo.from, vo.from + vo.duration] as [number, number]] : []),
+    ...timeline.audio.voSegments.map((s) => [s.from, s.from + s.duration] as [number, number]),
+  ];
+  const duck: [number, number] | null = spans.length
+    ? [Math.min(...spans.map((s) => s[0])), Math.max(...spans.map((s) => s[1]))]
+    : null;
 
   return (
-    <AbsoluteFill style={{backgroundColor: bg}}>
+    <AbsoluteFill
+      style={{
+        backgroundColor: bg,
+        // 全局纸格纹理：画面缩放后左右留白也延续同一套网格，不出现空洞
+        backgroundImage: `linear-gradient(${themes[timeline.theme].fg}0D 1px, transparent 1px), linear-gradient(90deg, ${themes[timeline.theme].fg}0D 1px, transparent 1px)`,
+        backgroundSize: `${themes[timeline.theme].grid}px ${themes[timeline.theme].grid}px`,
+      }}
+    >
       {timeline.scenes.map((scene) => (
         <Sequence key={scene.id} from={scene.from} durationInFrames={scene.duration} name={scene.id}>
-          <SceneTake scene={scene} />
+          <SceneTake scene={scene} contentScale={contentScale} />
         </Sequence>
       ))}
 
@@ -163,13 +192,19 @@ export const ProjectVideo: React.FC<{project: ProjectFile}> = ({project}) => {
         </Sequence>
       ) : null}
 
+      {timeline.audio.voSegments.map((seg) => (
+        <Sequence key={`vo-${seg.sceneId}`} from={seg.from} durationInFrames={Math.max(1, seg.duration)} name={`VO-${seg.sceneId}`}>
+          <Audio src={resolveSrc(seg.src)} volume={seg.volume} />
+        </Sequence>
+      ))}
+
       {timeline.audio.bgm.map((track, i) => (
         <Sequence key={`bgm-${i}`} from={Math.round((track.start ?? 0) * timeline.fps)} name={`BGM-${i + 1}`}>
           <BgmTrack
             track={track}
             from={Math.round((track.start ?? 0) * timeline.fps)}
             totalFrames={timeline.totalFrames}
-            duck={vo ? [vo.from, vo.from + vo.duration] : null}
+            duck={duck}
           />
         </Sequence>
       ))}

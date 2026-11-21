@@ -86,6 +86,8 @@ export type Timeline = {
   scenes: TimelineScene[];
   audio: {
     vo: {src: string; from: number; start: number; duration: number; volume: number; fadeIn: number; fadeOut: number} | null;
+    /** 分镜配音：每条独立落轨 */
+    voSegments: {src: string; sceneId: string; from: number; duration: number; volume: number}[];
     bgm: {src: string; start: number; volume: number; fadeIn: number; fadeOut: number; duration?: number}[];
     sfx: {name: string; src: string; from: number; at: number; volume: number; anchor: string | null}[];
   };
