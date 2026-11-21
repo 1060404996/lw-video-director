@@ -29,9 +29,40 @@
 - [接入、检索与许可边界](references/external-libraries.md)
 - [第三方资源声明](THIRD_PARTY_NOTICES.md)
 
-当前仓库只添加了引用和工作规范，没有复制外部代码或媒体。实际集成时逐项核验许可、作者、版本和素材权利。
+Skill 的外部接入规范保持独立。`visual-studio/` 包含已核验许可的 Motion Prompt MIT 源码适配器，以及 FredTalk 目录元数据和许可声明；没有打包 FredTalk 视频、会员源码或商业字体。详见 [工作台第三方声明](visual-studio/external/THIRD_PARTY_NOTICES.md)。
 
-## 安装
+## LW Visual Studio v0.2.0-preview
+
+独立的原创视觉组件预览工作台，源码位于 [`visual-studio/`](visual-studio/)。当前为待审核预览版，不替代现有 Skill 和 Python 分析工具。提供五个原创组件、Swiss/Future/Archive 三主题，以及来源独立的 References 检索。
+
+### 安装与启动
+
+推荐 Node.js 24 LTS；支持符合 Vite 要求的 Node.js 22.14+。使用 npm 锁文件安装：
+
+```sh
+cd visual-studio
+npm ci
+npm run dev
+```
+
+打开 <http://127.0.0.1:4173>，服务仅监听本机。视频导出另需 Chrome 和可用 WebGL；Windows 默认使用标准安装路径，可通过 `LW_BROWSER` 指定浏览器可执行文件。未在其他操作系统上完成视频渲染验收。
+
+### 动态预览与导出
+
+- Originals 中选择组件、切换主题并调整参数；支持播放/暂停、逐帧、拖动时间轴、适应窗口和全屏预览。参数控制支持窄屏访问。
+- TRANS-001 默认使用各主题原创场景，也可输入两张本地 PNG/JPEG/WebP；INFO-001 支持 JSON 数据输入。
+- 点击「导出 MP4」，等待本机任务完成后下载 H.264、1280×720、30fps 视频（当前无音轨）。导出位于 `visual-studio/exports/`，不提交仓库。
+- References 保留来源、许可和安装状态；仅 MP-001 已验证本地可执行。FredTalk 为官方在线引用，不视为已安装可执行组件。
+
+```sh
+npm test                      # 自动构建、单元测试和独立服务器 API 测试
+npm audit
+npm run render -- CAM-001      # 需要浏览器，输出真实 MP4
+```
+
+详细操作见 [工作台说明](visual-studio/README.md)，来源见 [第三方声明](visual-studio/external/THIRD_PARTY_NOTICES.md)，本轮记录见 [发布前检查](visual-studio/RELEASE-CHECKS.md)。不包含私人视频、密钥、node_modules、构建缓存和测试导出。
+
+## 安装 Skill
 
 ### Windows（PowerShell）
 

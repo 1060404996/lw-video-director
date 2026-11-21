@@ -1,0 +1,7 @@
+# LW References — third-party provenance
+
+Motion Prompt: © 2026 Shohei Ohtaki, MIT. Fixed source revision: `683ecca0548a1754ada141d10dc3a009d4c59bef`. `motion-prompt/LICENSE`, `kit-motion.js` and `element-001.txt` preserve original files and comments. `runtime.js` concatenates those sources and adds a deterministic frame adapter export. The LW adapter changes only playback speed, viewport scale and attribution, retaining upstream art and palette. It is external work, never LW Originals. Catalog metadata is from this same revision. No X embeds or third-party media are copied.
+
+FredTalk: © 2026 FredTalk. Fixed metadata revision: `59b9e9957957dc9f3fd94ab78f95cec33c29e915`. Only catalog metadata and license/notice files were downloaded. First-party MIT does not cover all reference-derived scenes, brands, fonts, sounds or media. `fredtalk/THIRD_PARTY_NOTICES.md` preserves those scope limits. Online video previews are streamed from official URLs; they are not installed sources and are not marked executable. Auth-only sources are not fetched or bypassed.
+
+Individual state lives in `catalog.json`; `provenance.json` records original downloaded-file SHA256s. Global Skills, Python video tools and the stable local video project were not modified. New resource providers can add independent metadata/asset directories and a validated adapter; no arbitrary downloaded code is executed automatically.

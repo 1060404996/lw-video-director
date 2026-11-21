@@ -1,0 +1,2 @@
+# Preserve upstream bytes so provenance SHA-256 values survive checkout.
+external/** -text

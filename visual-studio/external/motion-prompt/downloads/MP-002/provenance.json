@@ -1,0 +1,9 @@
+{
+  "id": "MP-002",
+  "revision": "683ecca0548a1754ada141d10dc3a009d4c59bef",
+  "files": {
+    "LICENSE": "6144e746ae9d6adc237b3063c069f7ba72dcec2946904a3f32f21345761726bc",
+    "kit.js": "7b3ee79d068fdb8ab735986fb0fe1cb44ab3a42500d9a619a56580fdbdfc2d75",
+    "element.txt": "02d9779ae293a335a8ac0eecba778dbd8ba32e47bfe182a56fa0c0d4f77a7989"
+  }
+}
