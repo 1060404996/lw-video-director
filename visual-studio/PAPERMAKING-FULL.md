@@ -24,6 +24,9 @@
 | 音轨 | AAC 48 kHz 立体声，渲染后 `loudnorm` 归一到 −16 LUFS |
 | 体积 / 码率 | 6.96 MB / ≈2.04 Mbps |
 | sha256 | `0410BB46333465DB6A9D19A0FF31FD8DE875ED3614D6998D63EEE351396E3F42`（同 `qa-papermaking/sha.txt`） |
+| 整片音轨 | `exports/papermaking-full-27s.wav`（pcm_s16le / 48k / 立体声，从成片抽出） |
+| 字幕导出 | `projects/papermaking-full/subtitles-27s.srt` |
+| 音频资产索引 | `projects/papermaking-full/assets/index.json`（逐镜时长 / 时间轴对齐 / 残差） |
 | 渲染耗时 | 182 s（本机 i5-9300H / 16G / GTX1650，Chrome 软件合成） |
 
 渲染命令（可复现）：
@@ -205,3 +208,11 @@ node scripts/direct.mjs projects/papermaking-full/project.json --out exports/pap
 - V3 成片：`exports/papermaking-v3-11s.mp4`，sha256 `A9ADF7B1…4060F`，提交 `7bdfbbb`（`feature/production-v0.3`）。
 - 本轮：V3 三镜的组件代码仅做「主题色迁移 + 背景替身」，**分镜节奏、文字层级、两处 FiberBridge 参数、wipe 7% 羽化、拖尾封顶（横 110 px / 竖 58 px）均未改**。
 - 新增两镜 + 两个新桥接 kind + 主题 + 接口层，全部在 `feature/production-v0.3` 之后的新分支上，未动 `main`，未合并 PR #4 / #5。
+
+---
+
+## 12. Draft PR
+
+- 地址：`https://github.com/wangzhijian0403/lw-video-director/pull/7`（Draft，**未合并、未动 main**）
+- 分支：`feature/papermaking-full-mist`（提交 `610e6d5`），因本机只有 `1060404996` 的凭据而该账号对上游仓库只读，分支推到 fork `1060404996/lw-video-director` 后向上游开 PR；这一点在 PR 描述里写明，若要改为上游直推，需要 `wangzhijian0403` 的写权限 token。
+- PR 正文包含：与 #4 / #5 / #6 的先后关系、改动清单、复现命令、未完成清单——与本文件口径一致。
