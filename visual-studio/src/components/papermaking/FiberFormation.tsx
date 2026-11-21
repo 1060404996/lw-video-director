@@ -270,7 +270,7 @@ export function FiberFormation({params, theme}: SceneProps) {  const p = params 
           <path d={DECKLE} fill="none" stroke="#fffaf0" strokeWidth="0.7" opacity={0.45 * frontNorm} transform="translate(0.7 0.7)" />
 
           {/* 标题 */}
-          <g>
+          <g opacity={1 - easeInOut(seg(prog, 0.8, 0.92))}>
             <text x="150" y="212" fill={s.accent} fontFamily={s.mono} fontSize="14" letterSpacing="5" opacity={qKicker * 0.95}>
               LW / 造纸术 · 第一辑
             </text>
@@ -297,7 +297,7 @@ export function FiberFormation({params, theme}: SceneProps) {  const p = params 
           </g>
 
           {/* 右侧竖排档案标记 */}
-          <g transform="translate(1172 158) rotate(90)" opacity={0.38 * qKicker}>
+          <g transform="translate(1172 158) rotate(90)" opacity={0.38 * qKicker * (1 - easeInOut(seg(prog, 0.8, 0.92)))}>
             <line x1="0" y1="-9" x2="190" y2="-9" stroke={s.muted} strokeWidth="0.8" />
             <text x="0" y="6" fill={s.muted} fontFamily={s.mono} fontSize="12" letterSpacing="4">
               PAPER · 105 A.D. / 第一辑
@@ -310,3 +310,4 @@ export function FiberFormation({params, theme}: SceneProps) {  const p = params 
     </div>
   );
 }
+

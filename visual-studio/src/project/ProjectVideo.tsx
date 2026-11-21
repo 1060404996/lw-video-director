@@ -4,6 +4,7 @@ import type {Params} from '../catalog/types';
 import {catalog} from '../catalog/registry';
 import {themes} from '../styles/themes';
 import {Scene} from '../remotion/Scene';
+import {FiberBridge} from '../components/papermaking/FiberBridge';
 import {buildTimeline, transitionPhase} from './timeline.mjs';
 import type {ProjectFile, TimelineScene} from './types';
 
@@ -27,6 +28,16 @@ const SceneTake: React.FC<{scene: TimelineScene; contentScale: number}> = ({scen
   let opacity = 1;
   let transform = 'none';
   let clipPath = 'none';
+  let maskImage: string | undefined;
+  // 软边擦除：边界带 7% 羽化，两镜互补，不会像硬切那样断开，也不会像淡入淡出那样两段文字重影
+  const wipeDir = (scene.transition as {direction?: string} | undefined)?.direction === 'down' ? 'to bottom' : 'to right';
+  const wipeMask = (keepFarSide: boolean, p: number) => {
+    const edge = Math.max(0, Math.min(100, p * 100));
+    const feather = 7;
+    return keepFarSide
+      ? `linear-gradient(${wipeDir}, transparent 0%, transparent ${Math.max(0, edge - feather)}%, #000 ${Math.min(100, edge + feather)}%, #000 100%)`
+      : `linear-gradient(${wipeDir}, #000 0%, #000 ${Math.max(0, edge - feather)}%, transparent ${Math.min(100, edge + feather)}%, transparent 100%)`;
+  };
 
   if (inF > 0 && frame < inF) {
     const p = interpolate(frame, [0, inF], [0, 1], {extrapolateRight: 'clamp'});
@@ -38,7 +49,7 @@ const SceneTake: React.FC<{scene: TimelineScene; contentScale: number}> = ({scen
       opacity = p;
       transform = `scale(${1.08 - 0.08 * p})`;
     } else if (kind === 'wipe') {
-      clipPath = `inset(0 ${(1 - p) * 100}% 0 0)`;
+      maskImage = wipeMask(false, p);
     }
   }
   if (outF > 0 && frame > scene.duration - outF) {
@@ -47,16 +58,35 @@ const SceneTake: React.FC<{scene: TimelineScene; contentScale: number}> = ({scen
       extrapolateRight: 'clamp',
     });
     opacity = Math.min(opacity, kind === 'wipe' ? 1 : p);
-    if (kind === 'wipe') clipPath = `inset(0 0 0 ${(1 - p) * 100}%)`;
+    if (kind === 'wipe') maskImage = wipeMask(true, 1 - p);
     else if (kind === 'slide') transform = `translateY(${-(1 - p) * 8}%)`;
     else if (kind === 'zoom') transform = `scale(${1 + 0.08 * (1 - p)})`;
   }
 
   return (
-    <AbsoluteFill style={{opacity, transform, clipPath, overflow: 'hidden'}}>
+    <AbsoluteFill style={{opacity, transform, clipPath, overflow: 'hidden', maskImage, WebkitMaskImage: maskImage}}>
       {/* 画面整体等比缩到字幕条之上：组件底部标题/坐标不会被字幕压住 */}
       <div style={{position: 'absolute', inset: 0, transform: `scale(${contentScale})`, transformOrigin: '50% 0%'}}>
         <Scene componentId={scene.component} params={params} theme={scene.theme} />
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+/** 纤维桥：接点前后把「正在动的纤维」交到下一镜，替代整段交叉溶解 */
+const BridgeTake: React.FC<{kind: 'toMaterials' | 'intoVat'; dur: number; contentScale: number; accent: string; muted: string}> = ({
+  kind,
+  dur,
+  contentScale,
+  accent,
+  muted,
+}) => {
+  const frame = useCurrentFrame();
+  const progress = dur <= 1 ? 1 : frame / (dur - 1);
+  return (
+    <AbsoluteFill style={{pointerEvents: 'none'}}>
+      <div style={{position: 'absolute', inset: 0, transform: `scale(${contentScale})`, transformOrigin: '50% 0%'}}>
+        <FiberBridge kind={kind} progress={progress} accent={accent} muted={muted} />
       </div>
     </AbsoluteFill>
   );
@@ -156,6 +186,9 @@ const CueView: React.FC<{cue: {duration: number; lines: string[]}; fontSize: num
 
 export const ProjectVideo: React.FC<{project: ProjectFile}> = ({project}) => {
   const timeline = useMemo(() => buildTimeline(project), [project]);
+  const bridges = ((project as ProjectFile & {bridges?: {to: string; kind: 'toMaterials' | 'intoVat'; duration?: number}[]})
+    .bridges ?? []).filter((b) => b && b.to);
+  const style = themes[timeline.theme];
   const band = timeline.subtitles.enabled ? bandHeight(timeline) : 0;
   const contentScale = band > 0 ? (timeline.height - band) / timeline.height : 1;
   const bg = themes[timeline.theme].bg;
@@ -183,6 +216,19 @@ export const ProjectVideo: React.FC<{project: ProjectFile}> = ({project}) => {
           <SceneTake scene={scene} contentScale={contentScale} />
         </Sequence>
       ))}
+
+      {bridges.map((b, i) => {
+        const to = timeline.scenes.find((s) => s.id === b.to);
+        if (!to) return null;
+        const dur = Math.max(2, Math.round((b.duration ?? 0.55) * timeline.fps));
+        const cutFrame = to.from + Math.round(to.prevOverlap / 2);
+        const start = Math.max(0, cutFrame - Math.round(dur / 2));
+        return (
+          <Sequence key={`bridge-${i}-${b.kind}`} from={start} durationInFrames={dur} name={`BRIDGE-${b.kind}`}>
+            <BridgeTake kind={b.kind} dur={dur} contentScale={contentScale} accent={style.accent} muted={style.muted} />
+          </Sequence>
+        );
+      })}
 
       {timeline.subtitles.enabled ? <SubtitleLayer timeline={timeline} /> : null}
 

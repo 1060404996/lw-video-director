@@ -57,6 +57,9 @@ export function Materials({params, theme}: SceneProps) {
 
   const drift = easeOut(seg(prog, 0.1, 1));
   const camY = -8 * drift;
+  // 交叉淡化期间只让纸张和纤维参与溶解：字先退干净，避免两镜文字叠影
+  const headIn = easeOut(seg(prog, 0.08, 0.26));
+  const textOut = 1 - easeInOut(seg(prog, 0.78, 0.92));
 
   return (
     <div style={{position: 'absolute', inset: 0}}>
@@ -89,16 +92,18 @@ export function Materials({params, theme}: SceneProps) {
         <ellipse cx="650" cy="400" rx="560" ry="230" fill="url(#ma-spot)" />
 
         {/* 标头 */}
-        <text x="88" y="80" fill={s.accent} fontFamily={s.mono} fontSize="13" letterSpacing="5">
-          02 / MATERIALS · 原料
-        </text>
-        <text x="88" y="128" fill={s.fg} fontFamily={s.display} fontSize="44" fontWeight="500">
-          原料就四样
-        </text>
-        <line x1="88" y1="146" x2={88 + 332 * easeOut(seg(prog, 0.04, 0.36))} y2="146" stroke={s.muted} strokeWidth="0.9" opacity="0.7" />
-        <text x="1192" y="80" textAnchor="end" fill={s.muted} fontFamily={s.mono} fontSize="12" letterSpacing="3">
-          皆含植物纤维 · 废料再用
-        </text>
+        <g opacity={headIn * textOut}>
+          <text x="88" y="80" fill={s.accent} fontFamily={s.mono} fontSize="13" letterSpacing="5">
+            02 / MATERIALS · 原料
+          </text>
+          <text x="88" y="128" fill={s.fg} fontFamily={s.display} fontSize="44" fontWeight="500">
+            原料就四样
+          </text>
+          <line x1="88" y1="146" x2={88 + 332 * easeOut(seg(prog, 0.12, 0.4))} y2="146" stroke={s.muted} strokeWidth="0.9" opacity="0.7" />
+          <text x="1192" y="80" textAnchor="end" fill={s.muted} fontFamily={s.mono} fontSize="12" letterSpacing="3">
+            皆含植物纤维 · 废料再用
+          </text>
+        </g>
 
         <g transform={`translate(640 ${360 + camY}) translate(-640 -360)`}>
           {list.map((m, i) => {
@@ -111,7 +116,7 @@ export function Materials({params, theme}: SceneProps) {
             const baseX = 1280 * slot.fx;
             const baseY = 336 + slot.dy;
             const cx = lerp(baseX, 640, conv * 0.84) + fromX;
-            const cy = lerp(baseY, 404, conv * 0.9) + fromY + (isActive ? -10 : 0) + drop * 200;
+            const cy = lerp(baseY, 404, conv * 0.9) + fromY + (isActive ? -10 : 0) + drop * 150;
             const scaleItem = lerp(1, 0.22, conv) * (isActive ? 1.05 : 1);
             const rot = lerp(slot.rot * (1 - enter * 0.55), 0, conv);
             const alpha = clamp01(enter * 1.1) * (1 - conv * 0.9);
@@ -159,7 +164,7 @@ export function Materials({params, theme}: SceneProps) {
 
                 {/* 标签：序号 + 名称 + 标注线，只在聚焦时亮起；位置固定在物体下缘之外 */}
                 {conv < 0.5 ? (
-                  <g opacity={clamp01(enter * 1.2) * (1 - conv * 2) * (isActive ? 1 : 0.7)}>
+                  <g opacity={clamp01(enter * 1.2) * (1 - conv * 2) * (isActive ? 1 : 0.7) * textOut}>
                     <line
                       x1={cx - slot.size * 0.34}
                       y1={508}

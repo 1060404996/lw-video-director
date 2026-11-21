@@ -33,7 +33,7 @@ const FLOOR_Y = VAT.floor;
 const CX = (VAT.inTopL + VAT.inTopR) / 2;
 
 const DROP_FROM = 186;
-const DROP_TO = WATER_Y + 26;
+const DROP_TO = WATER_Y + 46;
 
 /** 悬在水里的纤维：从落水点向四周散开，越泡越长、越泡越散 */
 const FIBERS = (() => {
@@ -114,8 +114,8 @@ export function SoakVat({params, theme}: SceneProps) {
   const spread = easeOut(seg(prog, 0.2, 0.86));
   const clump = 1 - easeInOut(seg(prog, 0.22, 0.52));
 
-  const qKicker = easeOut(seg(prog, 0.02, 0.16));
-  const qTitle = easeOut(seg(prog, 0.06, 0.28));
+  const qKicker = easeOut(seg(prog, 0.1, 0.24));
+  const qTitle = easeOut(seg(prog, 0.12, 0.32));
   const qSub = easeOut(seg(prog, 0.12, 0.34));
   const qNote = easeOut(seg(prog, 0.3, 0.55));
 
@@ -261,7 +261,7 @@ export function SoakVat({params, theme}: SceneProps) {
                 y1={c.y1}
                 x2={c.x2}
                 y2={c.y2}
-                stroke="#e6d1a8"
+                stroke="#dcc59b"
                 strokeWidth="1.4"
                 strokeOpacity={c.a}
                 strokeLinecap="round"
