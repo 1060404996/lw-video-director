@@ -1,4 +1,4 @@
-# LW 外部资源适配 POC · 第一轮与第二轮兼容性扩展
+# LW 外部资源适配 POC · 图标、Lottie 与素材试渲染入口
 
 状态：独立真实 MP4 技术验证通过；关键帧已查看，连续运动审片及真人听感验收尚未完成。这是 6 秒资源接入测试，不是造纸术主片。
 
@@ -89,3 +89,30 @@ python verify-compatibility.py evidence/compatibility-run
 第二轮实测：800×400、60fps、240 帧、4 秒 H.264 无音轨兼容性片；30fps JSON，ip=10/op=130，2x，左侧循环、右侧末帧保持。验证循环相隔 120 输出帧像素一致、末帧保持一致、乱序重复 PNG 字节一致、非零 in-point 的图形位置正确、分组/预合成内主题换色生效。结果 `evidence/round2/compatibility-qa.json`。关键帧已查看，连续运动用户验收待审。
 
 同时重渲染第一轮 6 秒含音轨用例，MP4 SHA256 与第一轮相同，两个音效仍通过对应检查，见 `evidence/round2/regression-qa.json`。运行环境及依赖未变，未重新声称跨平台或通用卡通兼容。素材授权检查器仅记录人类声明；它不是自动判断网页许可证的服务。
+
+## 第三轮：获权 JSON → 独立测试片与证据
+
+新入口只读用户指定 JSON 与独立权利声明，不读取其他工程、不下载或注册生产素材。人类先核对原始来源/许可，再填写自己的 rights 文件；示例记录只能用于示例原创纸页。
+
+```sh
+# 仅检查，不建输出目录、不启动浏览器
+node render-asset.mjs assets/paper-precomp.json rights-example.json evidence/asset-new settings-portrait.example.json --check
+# 一次运行：检查 → 数据快照 → 实际 MP4/PNG → Python 解码核验 → qa.json
+node render-asset.mjs assets/paper-precomp.json rights-example.json evidence/asset-new settings-portrait.example.json
+```
+
+需要 `python`（可用 `LW_PYTHON` 指定可执行程序）、av/numpy/Pillow、Node 依赖和本机 Chrome。所有代码入口固定在本目录，JSON 仅作为数据传入。新入口与纯预检共用 `intake.mjs`，拒绝缺权利/哈希不符/越界证据路径；证据 realpath 必须留在权利文件目录内，避免符号链接越界。`--check` 成功只表示 ready-for-test，不等于渲染完成。实际输出目录必须尚不存在，避免覆盖之前的证据。
+
+输入和授权在开始时读取并固定快照，源文件后续编辑不改变本轮渲染数据。输出包含：
+
+- `asset.mp4`：H.264 不透明背景、无音轨；不是透明叠层或主片。
+- `input-snapshot.json`：实际使用的数据和设置，可能包含用户私有素材内容，应留在用户项目，不自动上传 GitHub。
+- `receipt.json`：源文件/权利声明/许可证据哈希、来源/署名/审核者/授权 scopes、渲染器及锁文件哈希、实际设置、导出文件哈希。
+- 五张 PNG：首、中、尾及同帧乱序重复，用于稳定性和人工查看。
+- `qa.json`：实际解码规格、帧数、可见画面比例、变化帧数、文件和渲染器哈希、重复帧一致性；失败时写 blocked，不沿用之前的 PASS。
+
+receipt 保留 `rendered-unverified` 描述渲染阶段；最新核验结论以 qa.json 为准。若 Python 不可用/核验失败，命令返回非零并保留文件与失败信息，不能当完成。技术检查即使通过也始终 `productionApproved=false`；真人视觉/听感及主片接入仍独立。检查用哈希不是数字签名或防篡改认证，重新运行核验会检查当前源码/导出文件是否仍匹配。
+
+设置只接受 width/height/fps/durationFrames/startFrame/rate/loop/accent/background，拒绝拼错的参数。宽高为128..1920的偶数，总像素≤250万，fps只接受30/60，最长10秒且≤600帧，rate为(0,4]。默认960×540/30fps/120帧；本轮实测540×960/30fps/90帧、6帧延迟、2x循环，并非解锁原主片的竖屏生产能力。标记换色、背景色与前述 theme token 规则一致。
+
+第三轮使用同一原创 fixture 跑通新入口；未增加第三方素材、角色或依赖。14项单元测试及类型检查通过。结果在 `evidence/round3/`；历史第一/二轮证据保留。以后的具体卡通文件仍须通过该 profile，预合成兼容不代表任意 Lottie 都兼容。
