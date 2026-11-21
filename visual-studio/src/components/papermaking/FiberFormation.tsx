@@ -271,37 +271,37 @@ export function FiberFormation({params, theme}: SceneProps) {  const p = params 
           <path d={DECKLE} fill="none" stroke={pal.edge} strokeWidth="1.1" opacity={0.5 * frontNorm} />
           <path d={DECKLE} fill="none" stroke={pal.deckleHi} strokeWidth="0.7" opacity={0.45 * frontNorm} transform="translate(0.7 0.7)" />
 
-          {/* 标题 */}
-          <g opacity={1 - easeInOut(seg(prog, 0.8, 0.92))}>
-            <text x="150" y="212" fill={s.accent} fontFamily={s.mono} fontSize="14" letterSpacing="5" opacity={qKicker * 0.95}>
+          {/* 标题：保持在场（长镜头里 span 提前饱和，若跟随 prog 淡出会中途空白） */}
+          <g opacity={1}>
+            <text x="150" y="212" fill={s.accent} fontFamily={s.mono} fontSize="18" letterSpacing="5" opacity={qKicker * 0.95}>
               LW / 造纸术 · 第一辑
             </text>
             <line x1="150" y1="224" x2={150 + 46 * qKicker} y2="224" stroke={s.accent} strokeWidth="2" />
 
             <g clipPath="url(#ff-clip-l1)">
               <text x="150" y="332" fill={s.fg} fontFamily={s.display} fontSize="96" fontWeight="500" letterSpacing="-1" opacity="0.95">
-                一张纸，
+                {((p as Record<string, unknown>).title1 as string | undefined) ?? '一张纸，'}
               </text>
             </g>
             <g clipPath="url(#ff-clip-l2)">
               <text x="150" y="440" fill={s.fg} fontFamily={s.display} fontSize="96" fontWeight="500" letterSpacing="-1" opacity="0.95">
-                四道工序。
+                {((p as Record<string, unknown>).title2 as string | undefined) ?? '四道工序。'}
               </text>
             </g>
 
             <line x1="150" y1="478" x2={150 + 214 * qRule} y2="478" stroke={s.accent} strokeWidth="2.4" />
             <text x="150" y="514" fill={s.muted} fontFamily={s.font} fontSize="23" letterSpacing="1" opacity={qRule * 0.92}>
-              公元 105 年 · 蔡伦
+              {((p as Record<string, unknown>).subtitle as string | undefined) ?? '公元 105 年 · 蔡伦'}
             </text>
-            <text x="150" y="556" fill={s.muted} fontFamily={s.mono} fontSize="12" letterSpacing="3" opacity={qRule * 0.62}>
+            <text x="150" y="556" fill={s.muted} fontFamily={s.mono} fontSize="16" letterSpacing="3" opacity={qRule * 0.62}>
               原料 → 浸泡 → 蒸煮 → 抄造
             </text>
           </g>
 
           {/* 右侧竖排档案标记 */}
-          <g transform="translate(1172 158) rotate(90)" opacity={0.38 * qKicker * (1 - easeInOut(seg(prog, 0.8, 0.92)))}>
+          <g transform="translate(1172 158) rotate(90)" opacity={0.38 * qKicker}>
             <line x1="0" y1="-9" x2="190" y2="-9" stroke={s.muted} strokeWidth="0.8" />
-            <text x="0" y="6" fill={s.muted} fontFamily={s.mono} fontSize="12" letterSpacing="4">
+            <text x="0" y="6" fill={s.muted} fontFamily={s.mono} fontSize="16" letterSpacing="4">
               PAPER · 105 A.D. / 第一辑
             </text>
           </g>
@@ -312,4 +312,5 @@ export function FiberFormation({params, theme}: SceneProps) {  const p = params 
     </div>
   );
 }
+
 

@@ -95,14 +95,14 @@ export function Materials({params, theme}: SceneProps) {
 
         {/* 标头 */}
         <g opacity={headIn * textOut}>
-          <text x="88" y="80" fill={s.accent} fontFamily={s.mono} fontSize="13" letterSpacing="5">
+          <text x="88" y="80" fill={s.accent} fontFamily={s.mono} fontSize="17" letterSpacing="5">
             02 / MATERIALS · 原料
           </text>
           <text x="88" y="128" fill={s.fg} fontFamily={s.display} fontSize="44" fontWeight="500">
             原料就四样
           </text>
           <line x1="88" y1="146" x2={88 + 332 * easeOut(seg(prog, 0.12, 0.4))} y2="146" stroke={s.muted} strokeWidth="0.9" opacity="0.7" />
-          <text x="1192" y="80" textAnchor="end" fill={s.muted} fontFamily={s.mono} fontSize="12" letterSpacing="3">
+          <text x="1192" y="80" textAnchor="end" fill={s.muted} fontFamily={s.mono} fontSize="16" letterSpacing="3">
             皆含植物纤维 · 废料再用
           </text>
         </g>
@@ -181,7 +181,7 @@ export function Materials({params, theme}: SceneProps) {
                       y={508 + 20}
                       fill={isActive ? s.accent : s.muted}
                       fontFamily={s.mono}
-                      fontSize="12"
+                      fontSize="16"
                       letterSpacing="3"
                     >
                       {String(i + 1).padStart(2, '0')}
@@ -202,7 +202,7 @@ export function Materials({params, theme}: SceneProps) {
                         y={508 + 52}
                         fill={s.muted}
                         fontFamily={s.font}
-                        fontSize="14"
+                        fontSize="18"
                         opacity={isActive ? 0.95 : 0.5}
                       >
                         {m.note}
@@ -247,3 +247,4 @@ export function Materials({params, theme}: SceneProps) {
     </div>
   );
 }
+

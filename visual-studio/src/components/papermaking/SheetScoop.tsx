@@ -116,14 +116,14 @@ export function SheetScoop({params, theme}: SceneProps) {
 
         {/* 标头 */}
         <g opacity={qKick * textOut}>
-          <text x="110" y="96" fill={pal.accent} fontFamily={s.mono} fontSize="13" letterSpacing="5">
+          <text x="110" y="96" fill={pal.accent} fontFamily={s.mono} fontSize="17" letterSpacing="5">
             STEP 03 / 抄
           </text>
           <line x1="110" y1="112" x2={110 + 34 * qKick} y2="112" stroke={pal.accent} strokeWidth="2" />
-          <text x="1176" y="96" textAnchor="end" fill={pal.muted} fontFamily={s.mono} fontSize="12" letterSpacing="3">
+          <text x="1176" y="96" textAnchor="end" fill={pal.muted} fontFamily={s.mono} fontSize="16" letterSpacing="3">
             SECTION · 水槽侧剖
           </text>
-          <text x="1176" y="118" textAnchor="end" fill={pal.muted} fontFamily={s.mono} fontSize="11" letterSpacing="2">
+          <text x="1176" y="118" textAnchor="end" fill={pal.muted} fontFamily={s.mono} fontSize="15" letterSpacing="2">
             古法造纸 · 第三道工序
           </text>
         </g>
@@ -141,7 +141,7 @@ export function SheetScoop({params, theme}: SceneProps) {
             <text x="110" y="330" fill={pal.muted} fontFamily={s.font} fontSize="16" letterSpacing="0.5">
               帘面留下的，就是一层纸膜
             </text>
-            <text x="110" y="356" fill={pal.muted} fontFamily={s.mono} fontSize="11" letterSpacing="2">
+            <text x="110" y="356" fill={pal.muted} fontFamily={s.mono} fontSize="15" letterSpacing="2">
               厚了写不动 / 薄了会破 / 全凭手感
             </text>
           </g>
@@ -301,14 +301,14 @@ export function SheetScoop({params, theme}: SceneProps) {
         {/* 标注：纸膜 / 水面，收在安全区内，不与槽体重叠 */}
         <g opacity={easeOut(seg(prog, 0.7, 0.88)) * textOut} fontFamily={s.mono} letterSpacing="1.2">
           <line x1="1040" y1="330" x2="1096" y2="330" stroke={pal.accent} strokeWidth="1" opacity="0.5" />
-          <text x="1040" y="322" fill={pal.accent} fontSize="11">
+          <text x="1040" y="322" fill={pal.accent} fontSize="15">
             纸膜
           </text>
-          <text x="1040" y="352" fill={pal.muted} fontSize="10" opacity="0.7">
+          <text x="1040" y="352" fill={pal.muted} fontSize="14" opacity="0.7">
             厚薄全靠手
           </text>
           <line x1="1040" y1="386" x2="1096" y2="386" stroke={pal.muted} strokeWidth="1" opacity="0.3" />
-          <text x="1040" y="404" fill={pal.muted} fontSize="10" opacity="0.7">
+          <text x="1040" y="404" fill={pal.muted} fontSize="14" opacity="0.7">
             水面 · 与帘面齐
           </text>
         </g>
@@ -316,3 +316,4 @@ export function SheetScoop({params, theme}: SceneProps) {
     </div>
   );
 }
+

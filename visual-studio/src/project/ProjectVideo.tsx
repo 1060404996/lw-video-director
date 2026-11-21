@@ -12,11 +12,14 @@ import type {ProjectFile, TimelineScene} from './types';
 const resolveSrc = (src: string) =>
   /^(https?:|data:|blob:)/.test(src) ? src : staticFile(src.replace(/^\/+/, ''));
 
-/** 字幕条高度（渲染与画面缩放共用，保证画面底边正好压在条顶上） */
+/** 字幕条高度（渲染与画面缩放共用，保证画面底边正好压在条顶上）
+ *  收薄：字号加大但行距收紧、底部安全区下压，条高从 0.226×H 降到 0.168×H，主画面多出约 60px。 */
+const SUB_FONT_RATIO = 0.0455;
+const SUB_BOTTOM_RATIO = 0.044;
 const bandHeight = (timeline: ReturnType<typeof buildTimeline>) => {
-  const fontSize = Math.round(timeline.height * 0.042);
-  const bottom = Math.round(timeline.height * timeline.subtitles.safeBottom);
-  return Math.max(Math.round(fontSize * 1.32 * 2 + bottom + fontSize * 0.9), Math.round(timeline.height * 0.16));
+  const fontSize = Math.round(timeline.height * SUB_FONT_RATIO);
+  const bottom = Math.round(timeline.height * SUB_BOTTOM_RATIO);
+  return Math.max(Math.round(fontSize * 1.28 * 2 + bottom + 8), Math.round(timeline.height * 0.152));
 };
 
 /** 单场景：负责自身的进出转场（淡入淡出 / 竖向滑入 / 缩放 / 擦除） */
@@ -120,29 +123,29 @@ const BgmTrack: React.FC<{
   return <Audio src={resolveSrc(track.src)} volume={Math.max(0, v)} />;
 };
 
-/** 字幕层：底部安全区内，最多两行，进出行各 4 帧淡入淡出 */
+/** 字幕层：底部安全区内，最多两行，进出行各 4 帧淡入淡出
+ *  改版要点：不再铺厚蓝底条，改成向下加深的纸色渐变遮罩（透明→纸白），字用主题墨色 + 纸白描边光晕，
+ *  既把字从画面上「拎」出来，又不把主画面切掉一块。 */
 const SubtitleLayer: React.FC<{timeline: ReturnType<typeof buildTimeline>}> = ({timeline}) => {
   const style = themes[timeline.theme];
-  const fontSize = Math.round(timeline.height * 0.042);
-  const bottom = Math.round(timeline.height * timeline.subtitles.safeBottom);
+  const fontSize = Math.round(timeline.height * SUB_FONT_RATIO);
+  const bottom = Math.round(timeline.height * SUB_BOTTOM_RATIO);
   const band = bandHeight(timeline);
+  const paper = '#F8F7F2';
+  const tint = themes[timeline.theme].bg;
 
   return (
     <AbsoluteFill style={{pointerEvents: 'none'}}>
-      {/* 下三分之一字幕条：panel 底色压住图表坐标与组件页脚，发丝线让覆盖显得是设计而不是遮挡 */}
       <AbsoluteFill
         style={{
           top: 'auto',
-          height: band,
-          background: `${style.panel}F5`,
-          borderTop: `1px solid ${style.accent}66`,
-          boxShadow: `inset 0 1px 0 ${style.fg}12`,
-          backdropFilter: 'blur(6px)',
+          height: band + Math.round(timeline.height * 0.05),
+          background: `linear-gradient(180deg, ${tint}00 0%, ${tint}C4 42%, ${tint}EC 78%, ${tint}F7 100%)`,
         }}
       />
       {timeline.subtitles.cues.map((cue, i) => (
         <Sequence key={`${cue.from}-${i}`} from={cue.from} durationInFrames={cue.duration}>
-          <CueView cue={cue} fontSize={fontSize} bottom={bottom} color={style.fg} font={style.display} />
+          <CueView cue={cue} fontSize={fontSize} bottom={bottom} color={style.fg === '#193447' ? '#12202B' : style.fg} font={style.display} />
         </Sequence>
       ))}
     </AbsoluteFill>
@@ -170,10 +173,10 @@ const CueView: React.FC<{cue: {duration: number; lines: string[]}; fontSize: num
             key={i}
             style={{
               fontSize,
-              lineHeight: 1.32,
-              fontWeight: 600,
-              letterSpacing: 0.5,
-              textShadow: '0 1px 2px rgba(0,0,0,.18)',
+              lineHeight: 1.28,
+              fontWeight: 700,
+              letterSpacing: 1,
+              textShadow: '0 0 14px #F8F7F2, 0 0 6px #F8F7F2, 0 1px 2px rgba(20,32,43,.32)',
               padding: '0 .4em',
             }}
           >
@@ -194,6 +197,8 @@ export const ProjectVideo: React.FC<{project: ProjectFile}> = ({project}) => {
   const contentScale = band > 0 ? (timeline.height - band) / timeline.height : 1;
   const bg = themes[timeline.theme].bg;
   const vo = timeline.audio.vo;
+  // 是否已经把 vo/sfx/music 三轨预混成一条（预混后 Remotion 只播这一条，避免重复叠加）
+  const premuxed = (timeline.meta as {audioPreMuxed?: boolean} | undefined)?.audioPreMuxed === true;
   // 口播覆盖区间：整条 vo 与分镜段落并起来，BGM 在这段里压低
   const spans: [number, number][] = [
     ...(vo ? [[vo.from, vo.from + vo.duration] as [number, number]] : []),
@@ -247,13 +252,13 @@ export const ProjectVideo: React.FC<{project: ProjectFile}> = ({project}) => {
         </Sequence>
       ) : null}
 
-      {timeline.audio.voSegments.map((seg) => (
+      {timeline.audio.voSegments.filter(() => !premuxed).map((seg) => (
         <Sequence key={`vo-${seg.sceneId}`} from={seg.from} durationInFrames={Math.max(1, seg.duration)} name={`VO-${seg.sceneId}`}>
           <Audio src={resolveSrc(seg.src)} volume={seg.volume} />
         </Sequence>
       ))}
 
-      {timeline.audio.bgm.map((track, i) => (
+      {timeline.audio.bgm.filter(() => !premuxed).map((track, i) => (
         <Sequence key={`bgm-${i}`} from={Math.round((track.start ?? 0) * timeline.fps)} name={`BGM-${i + 1}`}>
           <BgmTrack
             track={track}
@@ -264,11 +269,13 @@ export const ProjectVideo: React.FC<{project: ProjectFile}> = ({project}) => {
         </Sequence>
       ))}
 
-      {timeline.audio.sfx.map((cue, i) => (
-        <Sequence key={`sfx-${i}-${cue.name}`} from={cue.from} name={`SFX-${cue.name}`}>
-          <Audio src={staticFile(cue.src)} volume={cue.volume} />
-        </Sequence>
-      ))}
+      {timeline.audio.sfx
+        .filter(() => !premuxed)
+        .map((cue, i) => (
+          <Sequence key={`sfx-${i}-${cue.name}`} from={cue.from} name={`SFX-${cue.name}`}>
+            <Audio src={staticFile(cue.src)} volume={cue.volume} />
+          </Sequence>
+        ))}
     </AbsoluteFill>
   );
 };

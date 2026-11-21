@@ -11,7 +11,11 @@ import {Materials} from '../components/papermaking/Materials';
 import {SoakVat} from '../components/papermaking/SoakVat';
 import {PoundMortar} from '../components/papermaking/PoundMortar';
 import {SheetScoop} from '../components/papermaking/SheetScoop';
-const implementations:Record<string,Entry['component']>={ 'TYPE-001':TitleEntrance,'TRANS-001':MaskTransition,'CAM-001':OrbitCamera,'INFO-001':DataChart,'LIGHT-001':ScanLight,'PAPER-001':FiberFormation,'MATERIAL-001':Materials,'SOAK-001':SoakVat,'POUND-001':PoundMortar,'SCOOP-001':SheetScoop };
+import {ProcessStrip} from '../components/papermaking/ProcessStrip';
+import {SheetDry} from '../components/papermaking/SheetDry';
+import {Timeline} from '../components/papermaking/Timeline';
+import {BambooVsPaper} from '../components/papermaking/BambooVsPaper';
+const implementations:Record<string,Entry['component']>={ 'TYPE-001':TitleEntrance,'TRANS-001':MaskTransition,'CAM-001':OrbitCamera,'INFO-001':DataChart,'LIGHT-001':ScanLight,'PAPER-001':FiberFormation,'MATERIAL-001':Materials,'SOAK-001':SoakVat,'POUND-001':PoundMortar,'SCOOP-001':SheetScoop,'PROCESS-001':ProcessStrip,'DRY-001':SheetDry,'TIMELINE-001':Timeline,'BAMBOO-001':BambooVsPaper };
 export const catalog:Entry[]=manifest.components.map(c=>{
   const defaults=Object.fromEntries(Object.entries(manifest.parameters).map(([k,v])=>[k,v.default]));
   const p={...defaults,...c.defaults} as unknown as Params;

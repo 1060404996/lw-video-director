@@ -118,14 +118,14 @@ export function PoundMortar({params, theme}: SceneProps) {
 
         {/* 标头 */}
         <g opacity={qKick * textOut}>
-          <text x="110" y="96" fill={pal.accent} fontFamily={s.mono} fontSize="13" letterSpacing="5">
+          <text x="110" y="96" fill={pal.accent} fontFamily={s.mono} fontSize="17" letterSpacing="5">
             STEP 02 / 捣
           </text>
           <line x1="110" y1="112" x2={110 + 34 * qKick} y2="112" stroke={pal.accent} strokeWidth="2" />
-          <text x="1176" y="96" textAnchor="end" fill={pal.muted} fontFamily={s.mono} fontSize="12" letterSpacing="3">
+          <text x="1176" y="96" textAnchor="end" fill={pal.muted} fontFamily={s.mono} fontSize="16" letterSpacing="3">
             SECTION · 石臼剖面
           </text>
-          <text x="1176" y="118" textAnchor="end" fill={pal.muted} fontFamily={s.mono} fontSize="11" letterSpacing="2">
+          <text x="1176" y="118" textAnchor="end" fill={pal.muted} fontFamily={s.mono} fontSize="15" letterSpacing="2">
             古法造纸 · 第二道工序
           </text>
         </g>
@@ -143,7 +143,7 @@ export function PoundMortar({params, theme}: SceneProps) {
             <text x="110" y="330" fill={pal.muted} fontFamily={s.font} fontSize="16" letterSpacing="0.5">
               泡透的纤维，舂成细浆
             </text>
-            <text x="110" y="356" fill={pal.muted} fontFamily={s.mono} fontSize="11" letterSpacing="2">
+            <text x="110" y="356" fill={pal.muted} fontFamily={s.mono} fontSize="15" letterSpacing="2">
               杵落 → 纤维束被打断 → 浆变细
             </text>
           </g>
@@ -151,7 +151,7 @@ export function PoundMortar({params, theme}: SceneProps) {
 
         {/* 右侧工序计数：随每一次落下进位 */}
         <g opacity={qKick * textOut} transform="translate(1176 300)">
-          <text textAnchor="end" fill={pal.accent} fontFamily={s.mono} fontSize="11" letterSpacing="2">
+          <text textAnchor="end" fill={pal.accent} fontFamily={s.mono} fontSize="15" letterSpacing="2">
             {`HIT ${String(Math.min(hits, idx + 1)).padStart(2, '0')} / ${String(hits).padStart(2, '0')}`}
           </text>
           {Array.from({length: hits}, (_, i) => (
@@ -161,18 +161,18 @@ export function PoundMortar({params, theme}: SceneProps) {
 
         {/* 右侧标注：统一收在右上空白区，避开臼体与 HIT 计数 */}
         <g opacity={qNote * textOut} fontFamily={s.mono} letterSpacing="1.2">
-          <text x="1040" y="156" fill={pal.accent} fontSize="11">
+          <text x="1040" y="156" fill={pal.accent} fontSize="15">
             石臼 · 青石凿制
           </text>
-          <text x="1040" y="180" fill={pal.muted} fontSize="10" opacity="0.8">
+          <text x="1040" y="180" fill={pal.muted} fontSize="14" opacity="0.8">
             木杵 · 枣木 · 头宽 8cm
           </text>
-          <text x="1040" y="206" fill={pal.accent} fontSize="11">
+          <text x="1040" y="206" fill={pal.accent} fontSize="15">
             浆 · 细度
           </text>
           <rect x="1040" y="214" width="54" height="3" fill={pal.muted} opacity="0.22" rx="1.5" />
           <rect x="1040" y="214" width={54 * refine} height="3" fill={pal.accent} opacity="0.9" rx="1.5" />
-          <text x="1104" y="218" fill={pal.muted} fontSize="10" opacity="0.8">
+          <text x="1104" y="218" fill={pal.muted} fontSize="14" opacity="0.8">
             {refine > 0.62 ? '细浆' : '粗浆'}
           </text>
         </g>
@@ -337,3 +337,4 @@ export function PoundMortar({params, theme}: SceneProps) {
     </div>
   );
 }
+

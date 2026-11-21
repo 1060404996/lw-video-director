@@ -343,7 +343,14 @@ export function buildTimeline(project = {}) {
             const from = round(c.start * fps);
             const to = round(c.end * fps);
             const duration = Math.max(1, Math.min(to, totalFrames) - from);
-            return {from, duration, start: c.start, end: c.end, text: String(c.text).trim(), lines: breakCaption(c.text, maxUnits, 2)};
+            const text = String(c.text).trim();
+            // 优先级：显式 lines（build 阶段按词边界排好的两行）> 文本里自带的换行 > 现场断行
+            const lines = Array.isArray(c.lines) && c.lines.length
+              ? c.lines.map((l) => String(l))
+              : text.includes('\n')
+                ? text.split('\n')
+                : breakCaption(text, maxUnits, 2);
+            return {from, duration, start: c.start, end: c.end, text, lines};
           })
           .filter((c) => c.duration > 0 && c.from < totalFrames);
 

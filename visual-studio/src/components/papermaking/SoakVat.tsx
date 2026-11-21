@@ -177,7 +177,7 @@ export function SoakVat({params, theme}: SceneProps) {
 
         {/* 文本区 */}
         <g>
-          <text x={VAT.outTopL} y="120" fill={s.accent} fontFamily={s.mono} fontSize="14" letterSpacing="5" opacity={qKicker}>
+          <text x={VAT.outTopL} y="120" fill={s.accent} fontFamily={s.mono} fontSize="18" letterSpacing="5" opacity={qKicker}>
             STEP 01 / 浸泡
           </text>
           <line x1={VAT.outTopL} y1="132" x2={VAT.outTopL + 46 * qKicker} y2="132" stroke={s.accent} strokeWidth="2" />
@@ -187,13 +187,13 @@ export function SoakVat({params, theme}: SceneProps) {
           <text x={VAT.outTopL} y="238" fill={s.muted} fontFamily={s.font} fontSize="21" opacity={qSub * 0.9}>
             水进到纤维之间，纤维束才会松开
           </text>
-          <text x={VAT.outTopR} y="120" textAnchor="end" fill={s.muted} fontFamily={s.mono} fontSize="12" letterSpacing="3" opacity={qKicker * 0.9}>
+          <text x={VAT.outTopR} y="120" textAnchor="end" fill={s.muted} fontFamily={s.mono} fontSize="16" letterSpacing="3" opacity={qKicker * 0.9}>
             SECTION · 水槽剖面
           </text>
-          <text x={VAT.outTopR} y="144" textAnchor="end" fill={s.muted} fontFamily={s.mono} fontSize="11" letterSpacing="3" opacity={qKicker * 0.42}>
+          <text x={VAT.outTopR} y="144" textAnchor="end" fill={s.muted} fontFamily={s.mono} fontSize="15" letterSpacing="3" opacity={qKicker * 0.42}>
             古法造纸 · 第一道工序
           </text>
-          <text x={VAT.outTopR} y="166" textAnchor="end" fill={s.muted} fontFamily={s.mono} fontSize="11" letterSpacing="3" opacity={qNote * 0.75}>
+          <text x={VAT.outTopR} y="166" textAnchor="end" fill={s.muted} fontFamily={s.mono} fontSize="15" letterSpacing="3" opacity={qNote * 0.75}>
             纤维吸水 → 松解 → 分离
           </text>
         </g>
@@ -385,3 +385,4 @@ export function SoakVat({params, theme}: SceneProps) {
     </div>
   );
 }
+

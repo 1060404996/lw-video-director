@@ -68,7 +68,12 @@ export function lintProject(project, {publicDir = path.join(ROOT, 'public'), bas
     const cues = timeline.subtitles.cues;
     if (!cues.length) warnings.push('没有生成任何字幕条');
     cues.forEach((c) => {
-      const lines = breakCaption(c.text, maxUnits, 99);
+      // 已手工排好行的字幕（含换行）按原样检查，不再重新断行
+      const lines = Array.isArray(c.lines) && c.lines.length
+        ? c.lines.map((l) => String(l))
+        : c.text.includes('\n')
+          ? c.text.split('\n')
+          : breakCaption(c.text, maxUnits, 99);
       if (lines.length > 2) warnings.push(`字幕「${c.text.slice(0, 12)}…」断成 ${lines.length} 行，超过 2 行`);
       const long = lines.filter((l) => [...l].reduce((n, ch) => n + (/[\u0000-\u00ff]/.test(ch) ? 0.56 : 1), 0) > maxUnits + 0.5);
       if (long.length) warnings.push(`字幕「${c.text.slice(0, 12)}…」单行超过 ${maxUnits} 字：${long[0]}`);
