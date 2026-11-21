@@ -199,7 +199,9 @@ class AssetIndex:
             evidence=(self.project/asset['rights']['evidencePath']).resolve()
             if not evidence.is_relative_to(self.root) or digest(evidence)!=asset['rights']['evidenceSha256']:
                 raise ValueError('rights evidence missing or changed')
-            for snapshot in asset['rights'].get('evidence',{}).get('snapshots',[]):
+            evidence_detail=asset['rights'].get('evidence',{})
+            snapshots=evidence_detail.get('snapshots',[]) if isinstance(evidence_detail,dict) else []
+            for snapshot in snapshots:
                 file=(self.project/snapshot['path']).resolve()
                 if not file.is_relative_to(self.root) or digest(file)!=snapshot['sha256']:raise ValueError('primary license snapshot changed')
         self.path(asset); return asset

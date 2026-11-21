@@ -98,5 +98,12 @@ class AssetTests(unittest.TestCase):
         with patch('lw_assets.fetch_bytes') as fetch:
             with self.assertRaises(ValueError):review_flickr_cc(self.index,'does-not-matter','publish')
             fetch.assert_not_called()
+    def test_manual_review_text_evidence_survives_authorized_import(self):
+        candidate=self.index.register_candidate({'title':'owned test','source':'https://example.org/source','provider':'test',
+                                                'licenseClaim':'by','downloadUrl':'https://example.org/a.png'})
+        proof={**meta()['rights'],'license':'by','source':candidate['source'],'author':'test author','downloadUrl':candidate['downloadUrl']}
+        self.index.approve(candidate['assetId'],proof)
+        with patch('lw_assets.fetch_bytes',return_value=self.image.read_bytes()):asset=self.index.download(candidate['assetId'],'private-test')
+        self.index.require(asset['assetId'],'private-test')
 
 if __name__=='__main__':unittest.main()

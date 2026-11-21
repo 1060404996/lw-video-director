@@ -47,7 +47,7 @@ python scripts/episode_preflight.py <episode.json> --phase render
 
 `asset-engine/1` 时间轴每镜使用 id/startFrame/durationFrames/purpose/title/visualAssetId/narrationAssetId；可有 overlayAssetIds、sfxAssetId、trimStart、narrationTrimStart/End、fit、endPolicy、captions。全局 output、scope、fontAssetId、musicAssetId；同一真实人声文件可以按明确音频范围用于不同镜头。也可由 subtitles.filePath 导入已对齐 SRT（需 source/author/rights）。脚本不生成虚构 ASR。clip 变速、任意多轨剪辑和缓存化局部返修尚未实现。
 
-本次本地实测：25 项 Python 测试；Openverse 图像元数据检索；Flickr 原始 ImageObject 与 CC BY 2.0 条款核验后取得照片并入片；七类本地媒体可索引/探测（录屏角色为用户声明，不自带屏幕捕获）；现有 LW MG 与 MP-001 可信适配器实际渲染。Openverse 音频接口虽有代码，尚未单独实测；其他站点、许可组合保持候选或待验证。
+本次本地实测：26 项 Python 测试；Openverse 图像元数据检索；Flickr 原始 ImageObject 与 CC BY 2.0 条款核验后取得照片并入片；七类本地媒体可索引/探测（录屏角色为用户声明，不自带屏幕捕获）；现有 LW MG 与 MP-001 可信适配器实际渲染。Openverse 音频接口虽有代码，尚未单独实测；其他站点、许可组合保持候选或待验证。
 
 `asset_timeline.py` 是独立 **FFmpeg/PyAV 时间轴适配器**，调用现有 Remotion 组件后在原生纵向画布按比例合成，并非新增 Remotion 多场景 Composition。已生成约55秒、8镜、1080×1920/30fps、AAC中文语音/字幕/音乐/音效的私有验证片，技术检查与视觉验收分开。它证明了索引素材可用于整片，不证明 Issue #3 的所有工程项或任意主题的一键制作已经完成。
 
