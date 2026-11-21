@@ -22,8 +22,8 @@
 | 时长 | 27.267 s（818 帧 @30fps，ffprobe 报 27.300，差 1 帧级封装余量） |
 | 画幅 / 帧率 | 1920×1080 / 30fps / h264 |
 | 音轨 | AAC 48 kHz 立体声，渲染后 `loudnorm` 归一到 −16 LUFS |
-| 体积 / 码率 | 6.96 MB / ≈2.04 Mbps |
-| sha256 | `0410BB46333465DB6A9D19A0FF31FD8DE875ED3614D6998D63EEE351396E3F42`（同 `qa-papermaking/sha.txt`） |
+| 体积 / 码率 | 8.08 MB / ≈2.37 Mbps |
+| sha256 | `C4733240E5E2AC69E56D6ADFD31B1F6F638DCA73C5BADC9F9AD785D727BB2488`（同 `qa-papermaking/sha.txt`） |
 | 整片音轨 | `exports/papermaking-full-27s.wav`（pcm_s16le / 48k / 立体声，从成片抽出） |
 | 字幕导出 | `projects/papermaking-full/subtitles-27s.srt` |
 | 音频资产索引 | `projects/papermaking-full/assets/index.json`（逐镜时长 / 时间轴对齐 / 残差） |
@@ -69,10 +69,12 @@ node scripts/direct.mjs projects/papermaking-full/project.json --out exports/pap
 | s01 | 纤维成纸 + 标题 | PAPER-001 | 0.000–3.933 | 3.933 s | 3.744 s | cut | — |
 | s02 | 四原料标本 | MATERIAL-001 | 3.433–8.033 | 4.600 s | 3.888 s | fade 0.5 | toMaterials 0.70 s |
 | s03 | 水槽剖面浸泡 | SOAK-001 | 7.533–11.633 | 4.100 s | 3.408 s | fade 0.5 | intoVat 0.60 s |
-| s04 | 石臼舂捣 | POUND-001（新） | 11.033–18.367 | 7.333 s | 6.528 s | fade 0.6 | intoMortar 0.60 s |
-| s05 | 竹帘抄纸 | SCOOP-001（新） | 17.767–27.267 | 9.500 s | 8.688 s | fade 0.6 | intoScoop 0.65 s |
+| s04 | 石臼舂捣 | POUND-001（新） | 11.033–18.367 | 7.333 s | 6.528 s | wipe 0.6 | intoMortar 0.60 s |
+| s05 | 竹帘抄纸 | SCOOP-001（新） | 17.767–27.267 | 9.500 s | 8.688 s | wipe 0.6 | intoScoop 0.65 s |
 
 时间重叠 = 转场时长的一半（`prevOverlap` 15/15/18/18 帧），不是硬叠 0.5 s，所以字幕起点与口播起点对得上。
+
+两处新接头原用 `fade`，实测从成片反抽帧时发现 18.07 s / 11.33 s 出现「臼和槽同时在场」的双重曝光（两个实体叠在一起，不是纤维形态连续），改为 `wipe`（7% 羽化）：新镜以软边扫过来，旧镜的实体不再和它对穿，纤维光柱仍压在接缝上。
 
 **两个新镜头的视觉表达目的（按要求逐个写明）**
 
