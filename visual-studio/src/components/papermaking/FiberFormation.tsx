@@ -8,7 +8,7 @@
  */
 import type {Params, SceneProps} from '../../catalog/types';
 import {resolveStyle} from '../../styles/themes';
-import {paperPalette} from './palette';
+import {paperBackdrop, paperPalette} from './palette';
 import {clamp01, decklePath, easeInOut, easeOut, lerp, mulberry32, seg, strandPath, useShot} from './kit';
 
 type P = Params & {span?: number};
@@ -127,24 +127,24 @@ export function FiberFormation({params, theme}: SceneProps) {  const p = params 
   const weaveIn = easeOut(seg(prog, 0.5, 0.86));
   const out = easeOut(seg(prog, 0.86, 1));
 
-  // 标题分层揭示：眉标 → 第一行 → 第二行 → 朱红短线 + 副题
-  const qKicker = easeOut(seg(prog, 0.46, 0.6));
-  const qL1 = easeOut(seg(prog, 0.52, 0.72));
-  const qL2 = easeOut(seg(prog, 0.6, 0.8));
-  const qRule = easeOut(seg(prog, 0.7, 0.9));
+  // 标题分层揭示：眉标 → 第一行 → 第二行 → 朱红短线 + 副题（整体后移，让开场钩子先说完）
+  const qKicker = easeOut(seg(prog, 0.58, 0.68));
+  const qL1 = easeOut(seg(prog, 0.64, 0.76));
+  const qL2 = easeOut(seg(prog, 0.7, 0.8));
+  const qRule = easeOut(seg(prog, 0.78, 0.9));
 
   const grainOpacity = 0.05 + 0.02 * Math.sin(prog * Math.PI * 2);
 
   return (
     <div style={{position: 'absolute', inset: 0}}>
       {/* 满幅底板：盖住工程层缩放后露出的两侧留白 */}
-      <div style={{position: 'absolute', inset: '-16%', background: pal.page}} />
+      <div style={{position: 'absolute', inset: '-16%', background: paperBackdrop(pal, theme)}} />
       <svg style={{position: 'absolute', inset: 0}} width="100%" height="100%" viewBox={`0 0 ${W} ${H}`}>
         <defs>
           <linearGradient id="ff-paper" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor={pal.paperHi} />
-            <stop offset="0.55" stopColor={pal.paperMid} />
-            <stop offset="1" stopColor={pal.paperLo} />
+            <stop offset="0" stopColor="#F5F2E6" />
+            <stop offset="0.55" stopColor="#EFEADD" />
+            <stop offset="1" stopColor="#E4DFD0" />
           </linearGradient>
           {/* 纸面显影：0 到水线之间是纸，水线之后仍是空的帘 */}
           <linearGradient id="ff-sweep" x1="0" y1="0" x2="1" y2="0">
@@ -188,7 +188,7 @@ export function FiberFormation({params, theme}: SceneProps) {  const p = params 
         </defs>
 
         {/* 桌面与纸下投影 */}
-        <rect width={W} height={H} fill={pal.page} />
+        <rect width={W} height={H} fill="none" />
         <ellipse cx="640" cy="600" rx="556" ry="112" fill="url(#ff-table)" />
 
         <g transform={`translate(${camX} ${camY}) rotate(${camRot}) scale(${camScale}) translate(-${camX} -${camY})`}>
@@ -308,6 +308,61 @@ export function FiberFormation({params, theme}: SceneProps) {  const p = params 
         </g>
 
         <rect width={W} height={H} fill="url(#ff-vignette)" pointerEvents="none" />
+
+        {/* 开场钩子：Codex / Claude 的对比，只在 hook=true 时出现，2.6s 内让观众知道「这条片子是 Codex 做的」
+            设计说明：用文字排印与划线做对比，不使用任何品牌标识、图标或素材 */}
+        {String((p as Record<string, unknown>).hook ?? '') === 'true' || (p as Record<string, unknown>).hook === true ? (
+          <g opacity={1 - easeInOut(seg(prog, 0.5, 0.6))}>
+            <g opacity={easeOut(seg(prog, 0.0, 0.1))}>
+              <text x="150" y="252" fill={s.muted} fontFamily={s.mono} fontSize="20" letterSpacing="6" opacity="0.8">
+                TWO MODELS · ONE BRIEF
+              </text>
+            </g>
+            <g opacity={easeOut(seg(prog, 0.02, 0.16))}>
+              <text x="150" y="344" fill={s.muted} fontFamily={s.display} fontSize="78" fontWeight="400" letterSpacing="1" opacity="0.55">
+                Claude
+              </text>
+              <line
+                x1="150"
+                y1="318"
+                x2={150 + 300 * easeInOut(seg(prog, 0.14, 0.3))}
+                y2="318"
+                stroke={s.accent}
+                strokeWidth="3"
+                opacity="0.85"
+              />
+            </g>
+            <g opacity={easeOut(seg(prog, 0.1, 0.26))}>
+              <text x="150" y="452" fill={s.fg} fontFamily={s.display} fontSize="104" fontWeight="600" letterSpacing="-1">
+                Codex
+              </text>
+              <line
+                x1="150"
+                y1="474"
+                x2={150 + 300 * easeOut(seg(prog, 0.24, 0.42))}
+                y2="474"
+                stroke={s.accent}
+                strokeWidth="4"
+                opacity="0.9"
+              />
+            </g>
+            <g opacity={easeOut(seg(prog, 0.26, 0.42))}>
+              <text x="150" y="524" fill={s.muted} fontFamily={s.font} fontSize="26">
+                这条视频的动画，就是 Codex 做的。
+              </text>
+            </g>
+            {/* 「我不信」印章：带旋转落下的压印 */}
+            <g
+              transform={`translate(966 236) rotate(${lerp(-14, -7, easeOut(seg(prog, 0.2, 0.34)))} ) scale(${lerp(1.5, 1, easeOut(seg(prog, 0.2, 0.34)))})`}
+              opacity={easeOut(seg(prog, 0.2, 0.32))}
+            >
+              <rect x="-92" y="-42" width="184" height="84" rx="6" fill="none" stroke={s.accent} strokeWidth="3" opacity="0.85" />
+              <text x="0" y="12" textAnchor="middle" fill={s.accent} fontFamily={s.display} fontSize="44" fontWeight="600">
+                我不信
+              </text>
+            </g>
+          </g>
+        ) : null}
       </svg>
     </div>
   );

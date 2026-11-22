@@ -1,40 +1,39 @@
 /**
  * Timeline.tsx — 镜头 08 / 10「蔡伦与传播」(TIMELINE-001)
  *
- * 一个组件两种用法，靠 mode 切换：
- *  - origin：东汉 105 年蔡伦把流程定下来，西汉麻纸是「纸早就有了」的对照；
- *  - spread：纸往西走的时间+路线（751 怛罗斯 → 阿拉伯 → 12 世纪欧洲）。
- * 时间轴按真实年份等比例映射，节点逐个亮起；不用装饰性小字，最小字号 16px。
+ * 一个组件两种用法，靠 mode 切换，两块版式完全不同：
+ *  - origin：左侧「大年份」105 逐位翻上，右侧三张史料卡依次落位（不是发明 / 定流程 / 变便宜），
+ *            底部一条紧凑年份尺做聚焦；不用整页白底小字。
+ *  - spread：一条分层动态路线（中原 → 撒马尔罕 → 巴格达 → 欧洲），路线带方向箭头与行走点，
+ *            每到一站弹出一张「地点 + 年份 + 发生了什么」的卡片；底部一条审慎表述的注。
+ *
+ * 所有文字 ≥17px（1280×720 viewBox → 1080p 约 25px），不做装饰性小字。
  */
 import React from 'react';
 import type {Params, SceneProps} from '../../catalog/types';
 import {resolveStyle} from '../../styles/themes';
 import {paperBackdrop, paperPalette} from './palette';
-import {clamp01, easeInOut, easeOut, lerp, seg, useShot} from './kit';
+import {easeInOut, easeOut, lerp, seg, useShot} from './kit';
 
 type P = Params & {span?: number; mode?: string};
 
 const W = 1280;
 const H = 720;
-const AX = {x1: 132, x2: 1148, y: 452};
-const Y0 = -250;
-const Y1 = 1300;
-
-const MILE = [
-  {year: -100, label: '西汉麻纸', note: '纸不是蔡伦发明的'},
-  {year: 105, label: '蔡伦 · 105', note: '流程定型，纸变便宜'},
-  {year: 751, label: '怛罗斯 · 751', note: '工匠西行，造纸出中原'},
-  {year: 1150, label: '欧洲 · 12 世纪', note: '又几百年，才到全世界'},
-];
-
-const xOf = (y: number) => lerp(AX.x1, AX.x2, (y - Y0) / (Y1 - Y0));
 
 const ROUTE = [
-  {t: 0, name: '中原'},
-  {t: 0.38, name: '撒马尔罕'},
-  {t: 0.68, name: '巴格达'},
-  {t: 1, name: '欧洲'},
+  {t: 0, name: '中原', year: '起源', note: '麻纸与造纸术的起点', x: 300, y: 452},
+  {t: 0.38, name: '撒马尔罕', year: '751', note: '怛罗斯战后，工匠西行', x: 620, y: 402},
+  {t: 0.68, name: '巴格达', year: '8 世纪', note: '阿拉伯世界出现造纸作坊', x: 900, y: 462},
+  {t: 1, name: '欧洲', year: '12 世纪', note: '经阿拉伯半岛与地中海传入', x: 1128, y: 340},
 ];
+
+const CARDS = [
+  {no: '01', head: '不是发明', year: '前 100 年', body: '西汉已经有麻纸，蔡伦做的是改进。'},
+  {no: '02', head: '定流程', year: '105 年', body: '把泡、捣、抄、晒四道工序做稳定，品质才统一。'},
+  {no: '03', head: '变便宜', year: '之后', body: '从贵族案头的稀罕物，变成普通人写的日用品。'},
+];
+
+const cardY = (i: number) => 248 + i * 138;
 
 export function Timeline({params, theme}: SceneProps) {
   const p = params as P;
@@ -43,91 +42,201 @@ export function Timeline({params, theme}: SceneProps) {
   const {p: prog} = useShot(p.span, 5.2);
   const spread = String(p.mode ?? 'origin') === 'spread';
 
-  const kick = easeOut(seg(prog, 0.0, 0.16));
   const tail = 1 - easeInOut(seg(prog, 0.93, 1));
-  const axisIn = easeInOut(seg(prog, 0.02, 0.24));
-  const routeIn = easeInOut(seg(prog, 0.1, 0.42));
-  const dot = easeInOut(seg(prog, 0.34, 0.86));
+  const kick = easeOut(seg(prog, 0, 0.14));
+  const head = easeOut(seg(prog, 0.04, 0.24));
+
+  // 大年份：从 000 翻到 105
+  const yv = Math.round(105 * easeOut(seg(prog, 0.1, 0.4)));
+  const yearIn = easeOut(seg(prog, 0.08, 0.3));
+
+  // 路线/节点
+  const routeIn = easeInOut(seg(prog, 0.06, 0.46));
+  const dot = easeInOut(seg(prog, 0.34, 0.88));
 
   return (
     <div style={{position: 'absolute', inset: 0}}>
       <div style={{position: 'absolute', inset: '-16%', background: paperBackdrop(pal, theme)}} />
       <svg style={{position: 'absolute', inset: 0}} width="100%" height="100%" viewBox={`0 0 ${W} ${H}`}>
         <defs>
-          <filter id="tl-blur" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="8" />
-          </filter>
+          <linearGradient id="tl-route" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor={pal.accent} stopOpacity="0.55" />
+            <stop offset="1" stopColor={pal.accent} stopOpacity="0.95" />
+          </linearGradient>
+          <linearGradient id="tl-card" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#FCFAF2" stopOpacity="0.96" />
+            <stop offset="1" stopColor={pal.paperHi} stopOpacity="0.9" />
+          </linearGradient>
         </defs>
 
+        {/* 头：眉标 / 标题 / 副题 */}
         <g opacity={kick * tail}>
-          <text x="110" y="104" fill={pal.accent} fontFamily={s.mono} fontSize="15" letterSpacing="4">
+          <text x="110" y="104" fill={pal.accent} fontFamily={s.mono} fontSize="17" letterSpacing="4">
             {spread ? 'HOW PAPER TRAVELLED WEST' : 'WHO MADE IT CHEAP'}
           </text>
-          <text x="110" y="172" fill={pal.ink} fontFamily={s.display} fontSize="50" fontWeight="500">
+          <text x="110" y="176" fill={pal.ink} fontFamily={s.display} fontSize="54" fontWeight="500">
             {String(p.title || (spread ? '纸，一路往西' : '蔡伦，把纸做便宜'))}
           </text>
-          <text x="110" y="206" fill={pal.muted} fontFamily={s.font} fontSize="19" opacity={0.88}>
+          <text x="110" y="212" fill={pal.muted} fontFamily={s.font} fontSize="21" opacity={0.9}>
             {String(p.subtitle || (spread ? '751 → 阿拉伯 → 12 世纪欧洲' : '公元 105 年，东汉'))}
           </text>
-          <line x1="110" y1="226" x2={110 + 190 * kick} y2="226" stroke={pal.accent} strokeWidth="2" opacity="0.7" />
+          <line x1="110" y1="232" x2={110 + 210 * kick} y2="232" stroke={pal.accent} strokeWidth="2" opacity="0.75" />
         </g>
 
-        {/* 时间轴本体 */}
-        <g opacity={axisIn * tail}>
-          <line x1={AX.x1} y1={AX.y} x2={lerp(AX.x1, AX.x2, axisIn)} y2={AX.y} stroke={pal.edge} strokeWidth="2" opacity="0.5" />
-          {MILE.map((m, i) => {
-            const x = xOf(m.year);
-            const lit = easeOut(seg(prog, 0.34 + i * 0.09, 0.5 + i * 0.09));
-            const isKey = (spread && m.year >= 751) || (!spread && m.year === 105);
-            if (x > lerp(AX.x1, AX.x2, axisIn) + 3) return null;
-            return (
-              <g key={m.year} opacity={1}>
-                <line x1={x} y1={AX.y - 8} x2={x} y2={AX.y + 8} stroke={pal.muted} strokeWidth="1.4" opacity={0.7} />
-                <circle cx={x} cy={AX.y} r={isKey ? 6 + 2 * lit : 4} fill={isKey ? pal.accent : pal.paperHi} opacity={isKey ? 0.45 + 0.55 * lit : 0.9} stroke={pal.muted} strokeWidth="1" />
-                <text x={x} y={i === 0 ? AX.y - 46 : AX.y + 46} textAnchor="middle" fill={isKey && lit > 0.4 ? pal.ink : pal.muted} fontFamily={s.font} fontSize="22" fontWeight={isKey ? 600 : 400} opacity={0.55 + 0.45 * lit}>
-                  {m.label}
-                </text>
-                <text x={x} y={i === 0 ? AX.y - 20 : AX.y + 74 + (i % 2 ? 24 : 0)} textAnchor="middle" fill={pal.muted} fontFamily={s.font} fontSize="17" opacity={0.75 * lit}>
-                  {m.note}
-                </text>
-              </g>
-            );
-          })}
-        </g>
-
-        {/* 传播路线：只在 spread 下出现 */}
         {spread ? (
-          <g opacity={routeIn * tail}>
-            <line x1={AX.x1 + 40} y1="330" x2={lerp(AX.x1 + 40, AX.x2 - 40, routeIn)} y2="330" stroke={pal.accent} strokeWidth="2" opacity="0.35" strokeDasharray="6 8" />
-            {ROUTE.map((r) => {
-              const x = lerp(AX.x1 + 40, AX.x2 - 40, r.t);
-              const on = dot >= r.t - 0.02 ? 1 : 0;
+          <g opacity={tail}>
+            {/* 背景经纬弧：给「空间」一点暗示，不画真实地图 */}
+            <g opacity={0.18 * routeIn}>
+              {[0, 1, 2, 3].map((i) => (
+                <ellipse
+                  key={i}
+                  cx="640"
+                  cy="430"
+                  rx={260 + i * 190}
+                  ry={92 + i * 62}
+                  fill="none"
+                  stroke={pal.muted}
+                  strokeWidth="1"
+                />
+              ))}
+            </g>
+
+            {/* 路线：折线 + 方向箭头 + 行走点 */}
+            <g>
+              {ROUTE.slice(0, -1).map((r, i) => {
+                const n = ROUTE[i + 1];
+                const k = easeInOut(seg(prog, 0.08 + i * 0.07, 0.34 + i * 0.07));
+                if (k <= 0) return null;
+                const x2 = lerp(r.x, n.x, k);
+                const y2 = lerp(r.y, n.y, k);
+                const ang = (Math.atan2(n.y - r.y, n.x - r.x) * 180) / Math.PI;
+                return (
+                  <g key={`seg-${i}`}>
+                    <line x1={r.x} y1={r.y} x2={x2} y2={y2} stroke="url(#tl-route)" strokeWidth="3" strokeLinecap="round" />
+                    {k > 0.6 ? (
+                      <g transform={`translate(${x2} ${y2}) rotate(${ang})`} opacity={(k - 0.6) / 0.4}>
+                        <path d="M-10 -7 L4 0 L-10 7 Z" fill={pal.accent} opacity="0.85" />
+                      </g>
+                    ) : null}
+                  </g>
+                );
+              })}
+            </g>
+
+            {/* 节点 */}
+            {ROUTE.map((r, i) => {
+              const on = dot >= r.t - 0.03 ? 1 : 0;
+              const pop = easeOut(seg(dot, r.t - 0.05, r.t + 0.02));
+              const above = i % 2 === 1;
               return (
-                <g key={r.name} opacity={0.35 + 0.65 * on}>
-                  <circle cx={x} cy="330" r={10} fill={on ? pal.accent : pal.paperHi} stroke={pal.muted} strokeWidth="1.4" />
-                  <text x={x} y="298" textAnchor="middle" fill={pal.ink} fontFamily={s.font} fontSize="22" fontWeight={on ? 600 : 400}>
+                <g key={r.name}>
+                  <circle cx={r.x} cy={r.y} r={12 + 3 * pop} fill={on ? pal.accent : pal.paperHi} stroke={pal.muted} strokeWidth="1.6" opacity={0.45 + 0.55 * on} />
+                  <text
+                    x={r.x}
+                    y={r.y + (above ? -30 : 40)}
+                    textAnchor="middle"
+                    fill={on ? pal.ink : pal.muted}
+                    fontFamily={s.font}
+                    fontSize="26"
+                    fontWeight={on ? 600 : 400}
+                    opacity={0.5 + 0.5 * on}
+                  >
                     {r.name}
+                  </text>
+                  {/* 站点卡片：年份 + 发生了什么 */}
+                  <g opacity={pop}>
+                    <rect
+                      x={r.x - 118}
+                      y={r.y + (above ? -112 : 56)}
+                      width="236"
+                      height="62"
+                      rx="6"
+                      fill="url(#tl-card)"
+                      opacity="0.92"
+                    />
+                    <rect x={r.x - 118} y={r.y + (above ? -112 : 56)} width="5" height="62" fill={pal.accent} opacity="0.9" />
+                    <text
+                      x={r.x - 100}
+                      y={r.y + (above ? -86 : 82)}
+                      fill={pal.accent}
+                      fontFamily={s.mono}
+                      fontSize="18"
+                      letterSpacing="1"
+                    >
+                      {r.year}
+                    </text>
+                    <text
+                      x={r.x - 100}
+                      y={r.y + (above ? -62 : 106)}
+                      fill={pal.muted}
+                      fontFamily={s.font}
+                      fontSize="18"
+                    >
+                      {r.note}
+                    </text>
+                  </g>
+                </g>
+              );
+            })}
+
+            {/* 行走的点 */}
+            <circle cx={lerp(ROUTE[0].x, ROUTE[3].x, dot)} cy={lerp(ROUTE[0].y, ROUTE[3].y, dot)} r="8" fill={pal.paperHi} stroke={pal.accent} strokeWidth="3" />
+
+            {/* 审慎表述 */}
+            <text x="110" y="640" fill={pal.muted} fontFamily={s.font} fontSize="17" opacity={0.78 * easeOut(seg(prog, 0.5, 0.7))}>
+              通行说法：751 年怛罗斯之战后造纸术西传；具体年份与路径学界仍有讨论。
+            </text>
+          </g>
+        ) : (
+          <g opacity={tail}>
+            {/* 大年份 */}
+            <g opacity={yearIn}>
+              <text x="110" y="386" fill={pal.ink} fontFamily={s.display} fontSize="132" fontWeight="500" letterSpacing="-2">
+                {String(yv).padStart(3, '0')}
+              </text>
+              <text x="118" y="424" fill={pal.accent} fontFamily={s.mono} fontSize="20" letterSpacing="3">
+                公元 105 年 · 东汉元兴元年
+              </text>
+              <line x1="118" y1="444" x2={118 + 246 * yearIn} y2="444" stroke={pal.accent} strokeWidth="2" opacity="0.7" />
+            </g>
+
+            {/* 三张史料卡：右进、轻旋、错峰落位 */}
+            {CARDS.map((c, i) => {
+              const t0 = 0.18 + i * 0.09;
+              const a = easeOut(seg(prog, t0, t0 + 0.2));
+              if (a <= 0) return null;
+              const y = cardY(i);
+              return (
+                <g key={c.no} opacity={a} transform={`translate(${(1 - a) * 54} ${(1 - a) * 16}) rotate(${(1 - a) * 1.4} 470 ${y + 56})`}>
+                  <rect x={470} y={y} width="716" height="112" rx="8" fill="url(#tl-card)" opacity="0.94" />
+                  <rect x={470} y={y + 112} width="716" height="9" rx="4" fill={pal.edge} opacity="0.12" />
+                  <rect x={470} y={y} width="6" height="112" fill={pal.accent} opacity="0.85" />
+                  <text x="500" y={y + 34} fill={pal.accent} fontFamily={s.mono} fontSize="17" letterSpacing="2">
+                    {c.no}
+                  </text>
+                  <text x="500" y={y + 80} fill={pal.ink} fontFamily={s.display} fontSize="31" fontWeight="500">
+                    {c.head}
+                  </text>
+                  <text x="660" y={y + 79} fill={pal.muted} fontFamily={s.font} fontSize="19">
+                    {c.body}
+                  </text>
+                  <text x="1160" y={y + 46} textAnchor="end" fill={pal.accent} fontFamily={s.mono} fontSize="17" opacity="0.75">
+                    {c.year}
                   </text>
                 </g>
               );
             })}
-            {/* 行走的点：从撒马尔罕到欧洲，说明「工匠带着手艺走」 */}
-            <circle cx={lerp(AX.x1 + 40, AX.x2 - 40, dot)} cy="330" r="7" fill={pal.paperHi} stroke={pal.accent} strokeWidth="2.5" />
-          </g>
-        ) : (
-          <g opacity={easeOut(seg(prog, 0.4, 0.6)) * tail}>
-            <text x="150" y="286" fill={pal.ink} fontFamily={s.font} fontSize="26" opacity={0.92}>
-              蔡伦的功劳不是发明
-            </text>
-            <text x="150" y="326" fill={pal.muted} fontFamily={s.font} fontSize="24" opacity={0.8}>
-              是把四道工序做稳定、做便宜
-            </text>
-            <text x="150" y="366" fill={pal.muted} fontFamily={s.font} fontSize="22" opacity={0.7}>
-              从贵族案头的稀罕物，变成普通人写字用的日用品
-            </text>
+
+            {/* 一句话结论，替掉大段时间线 */}
+            <g opacity={easeOut(seg(prog, 0.66, 0.84))}>
+              <text x="470" y="672" fill={pal.ink} fontFamily={s.font} fontSize="20" opacity="0.9">
+                纸早就有了。蔡伦把它做稳、做便宜 —— 这才是「纸」进入日常的那一步。
+              </text>
+            </g>
           </g>
         )}
       </svg>
     </div>
   );
 }
+

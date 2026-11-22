@@ -86,11 +86,11 @@ const ARCHIVE: PaperPalette = {
 
 /** 青灰蓝 + 宣纸白 + 薄雾青山 */
 const MIST: PaperPalette = {
-  // 宣纸白留一点透，底下的青山雾层才能隐约透出来
-  page: '#F8F7F2EE',
-  paperHi: '#FDFCF7',
-  paperMid: '#F6F5EF',
-  paperLo: '#E7E9E1',
+  // 暖纸白，压一点亮度：整幅不再接近纯白（纯白 + 白卡 = 刺眼）
+  page: '#F0EDE4',
+  paperHi: '#FAF8F0',
+  paperMid: '#EFEDE2',
+  paperLo: '#DFE1D6',
   edge: '#A9BCC4',
   fiber: '#7C97A0',
   fiberAlt: '#66838D',
@@ -136,9 +136,10 @@ export const paperPalette = (theme: ThemeId, accentOverride?: string): PaperPale
  */
 export const paperBackdrop = (pal: PaperPalette, theme: ThemeId): string => {
   if (theme !== 'mist-blue-paper') return pal.page;
-  return [
-    // 字区（左上）最实，右下与下缘逐步放开，让分层青山透出来
-    'radial-gradient(120% 105% at 24% 14%, #F8F7F2F2 0%, #F8F7F2E6 40%, #F8F7F2B6 66%, #F8F7F26E 100%)',
-    'linear-gradient(180deg, #F8F7F2EC 0%, #F8F7F2CE 58%, #F8F7F286 100%)',
-  ].join(', ');
+  // 均匀薄纸，不再用径向渐变：径向会在画面中间实、两端透，
+  // 和 Scene 的淡蓝底一叠就出现「中间暖白、两侧偏蓝 + 竖直接缝」。
+  // 现在全片只有这一层纸，山雾从纸下面透出来，任何位置的色调都一致。
+  // 纸面统一由 ProjectVideo 的实底 + 远山层提供，分镜内不再铺半透明纸，
+  // 避免「分镜纸 vs 画框外」出现色差接缝。
+  return 'transparent';
 };

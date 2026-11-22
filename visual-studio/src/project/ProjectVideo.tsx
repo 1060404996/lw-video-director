@@ -131,8 +131,8 @@ const SubtitleLayer: React.FC<{timeline: ReturnType<typeof buildTimeline>}> = ({
   const fontSize = Math.round(timeline.height * SUB_FONT_RATIO);
   const bottom = Math.round(timeline.height * SUB_BOTTOM_RATIO);
   const band = bandHeight(timeline);
-  const paper = '#F8F7F2';
-  const tint = themes[timeline.theme].bg;
+  const paper = '#FAF8F0';
+  const tint = timeline.theme === 'mist-blue-paper' ? '#E3DFD3' : themes[timeline.theme].bg;
 
   return (
     <AbsoluteFill style={{pointerEvents: 'none'}}>
@@ -213,16 +213,18 @@ export const ProjectVideo: React.FC<{project: ProjectFile}> = ({project}) => {
       style={{
         backgroundColor: bg,
         // 全局纸格纹理：画面缩放后左右留白也延续同一套网格，不出现空洞
-        backgroundImage: `linear-gradient(${themes[timeline.theme].fg}0D 1px, transparent 1px), linear-gradient(90deg, ${themes[timeline.theme].fg}0D 1px, transparent 1px)`,
+        backgroundImage: `linear-gradient(${themes[timeline.theme].fg}08 1px, transparent 1px), linear-gradient(90deg, ${themes[timeline.theme].fg}08 1px, transparent 1px)`,
         backgroundSize: `${themes[timeline.theme].grid}px ${themes[timeline.theme].grid}px`,
       }}
     >
       {timeline.meta?.backdrop === 'mist-mountains' ? (
-        <MistMountains
-          theme={timeline.theme}
-          parallax={timeline.meta.backdropParallax ?? 1}
-          haze={timeline.meta.backdropHaze ?? 1}
-        />
+        <div style={{position: 'absolute', inset: 0, opacity: 0.30}}>
+          <MistMountains
+            theme={timeline.theme}
+            parallax={timeline.meta.backdropParallax ?? 1}
+            haze={timeline.meta.backdropHaze ?? 1}
+          />
+        </div>
       ) : null}
 
       {timeline.scenes.map((scene) => (
@@ -279,3 +281,4 @@ export const ProjectVideo: React.FC<{project: ProjectFile}> = ({project}) => {
     </AbsoluteFill>
   );
 };
+

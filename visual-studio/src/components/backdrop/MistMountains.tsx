@@ -53,10 +53,10 @@ export const MistMountains: React.FC<{
   const isMist = theme === 'mist-blue-paper';
   const rnd = mulberry32(0x51a7);
   const ridges: Ridge[] = [
-    {base: height * 0.42, amp: 26, freq: 2.1, phase: 0.4, depth: 0.18, color: isMist ? '#DCE6E9' : '#ded2ba', soft: 0.5},
-    {base: height * 0.55, amp: 34, freq: 1.7, phase: 2.2, depth: 0.34, color: isMist ? '#CBD9DF' : '#cebfa3', soft: 0.36},
-    {base: height * 0.7, amp: 42, freq: 1.35, phase: 4.1, depth: 0.58, color: isMist ? '#B4C7CE' : '#b9a684', soft: 0.22},
-    {base: height * 0.86, amp: 30, freq: 1.05, phase: 1.1, depth: 0.9, color: isMist ? '#9CB4BC' : '#a5906f', soft: 0.12},
+    {base: height * 0.4, amp: 26, freq: 2.1, phase: 0.4, depth: 0.18, color: isMist ? '#C3D5DD' : '#ded2ba', soft: 0.5},
+    {base: height * 0.53, amp: 34, freq: 1.7, phase: 2.2, depth: 0.34, color: isMist ? '#A7BEC9' : '#cebfa3', soft: 0.36},
+    {base: height * 0.68, amp: 42, freq: 1.35, phase: 4.1, depth: 0.58, color: isMist ? '#88A3AF' : '#b9a684', soft: 0.22},
+    {base: height * 0.85, amp: 30, freq: 1.05, phase: 1.1, depth: 0.9, color: isMist ? '#6A8895' : '#a5906f', soft: 0.12},
   ];
   const cycle = frame / Math.max(1, durationInFrames - 1);
   const drift = (cycle - 0.5) * 2; // -1 → 1，全片单向推进，不做来回摆
@@ -67,10 +67,15 @@ export const MistMountains: React.FC<{
       <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
         <defs>
           <linearGradient id="mm-sky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor={isMist ? '#E8EEF0' : '#efe6d5'} />
-            <stop offset="0.62" stopColor={isMist ? '#F2F6F7' : '#f3ebda'} />
-            <stop offset="1" stopColor={isMist ? '#F8F7F2' : '#efe6d3'} />
+            <stop offset="0" stopColor={isMist ? '#CBD9DF' : '#efe6d5'} />
+            <stop offset="0.48" stopColor={isMist ? '#DCE7EA' : '#f3ebda'} />
+            <stop offset="0.8" stopColor={isMist ? '#E9F0F1' : '#efe6d3'} />
+            <stop offset="1" stopColor={isMist ? '#F1F2EC' : '#efe6d3'} />
           </linearGradient>
+          <radialGradient id="mm-vig" cx="0.5" cy="0.46" r="0.78">
+            <stop offset="0.45" stopColor="#193447" stopOpacity="0" />
+            <stop offset="1" stopColor="#193447" stopOpacity="0.16" />
+          </radialGradient>
           <filter id="mm-blur-lg" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="26" />
           </filter>
@@ -127,6 +132,8 @@ export const MistMountains: React.FC<{
         })}
 
         {grain ? <rect width={width} height={height} filter="url(#mm-grain)" opacity="0.05" /> : null}
+        {/* 整体压一层暗角，避免大面积近白刺眼 */}
+        <rect width={width} height={height} fill="url(#mm-vig)" />
       </svg>
     </AbsoluteFill>
   );

@@ -177,7 +177,7 @@ async function main() {
     outputLocation: output,
     codec: 'h264',
     pixelFormat: 'yuv420p',
-    crf: has('draft') ? 24 : 18,
+    crf: has('draft') ? 24 : 16,
     audioCodec: 'aac',
     audioBitrate: '192k',
     concurrency: Number(flag('concurrency', 1)),
@@ -218,3 +218,4 @@ main().catch((e) => {
   console.error(`\n渲染失败：${e.message}`);
   process.exit(1);
 });
+

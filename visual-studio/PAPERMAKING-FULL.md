@@ -2,6 +2,26 @@
 
 本文件对应**完整成片**，替换此前 27.267 秒样片的交付口径。上一轮样片说明见 git 历史（commit `7a548b7` 之前）。
 
+## 0. 返修版 v2（第二轮审核后，2026-11-22）
+
+| 项 | 首版 | 返修版 |
+|---|---|---|
+| 文件 | `exports/papermaking-full.mp4` | 同名覆盖；首版留档 `exports/papermaking-full-v1.mp4` |
+| 体积 / 码率 | 19,745,121 B / 1.89 Mbps | 21,539,776 B / 2.06 Mbps（crf 18→16） |
+| sha256 | `D579F30C…7DFA` | `AEED21C7B5D5AB573BE511D3A6AC9331A5EA98B349D5DCF5C09DFCAF023B2417` |
+| 响度 | I −15.9 LUFS / TP −6.5 dBFS | 同左（I −15.9 / TP −6.5 / LRA 1.6） |
+| 渲染耗时 | 671 s | 510.1 s（`--concurrency 6`） |
+
+改动只发生在四个 P0 段与背景层，时间轴总长、配音、口播文本均未改：
+
+- 0–4s 开场：`FiberFormation` 新增 `hook` 层（Codex vs Claude 文字钩子 + 「我不信」印章），标题揭示后移。
+- 40.5–51.6s 蔡伦段：`Timeline.tsx` 重写为「132px 大年份 105 + 三张史料卡（不是发明/定流程/变便宜）+ 结论句」。
+- 60.7–71.9s 传播段：同文件 spread 分支重写为「经纬弧 + 折线路线 + 站点卡 + 行走点 + 审慎注」。
+- 71.9–83.5s 结尾：新增 `RecapEnding.tsx`（ENDING-001），泡捣抄晒四格复活 → 收拢 → 合成整纸 → 标题 + CTA。
+- 背景层：`Scene` 去掉自带底色、分镜内半透明纸改为空操作、页面底压到 `#DFDAC9`、远山层 0.30、网格 3%，修掉「刺眼 + 竖直接缝」。
+
+逐事件音效时间码、返修前后对比、验收矩阵与未解决项见 `exports/papermaking-full-revision.md`。
+
 ## 1. 结论先行
 
 - 有 1 条 **83.700 秒、1920×1080、30fps、从头可播到尾** 的真实成片：`exports/papermaking-full.mp4`。
@@ -40,7 +60,7 @@
 | s08 | 蔡伦与 105 年 | TIMELINE-001(origin) | cailun 40.525–51.616 | 11.24 | fade |
 | s09 | 竹简退场 | BAMBOO-001 | bamboo 51.616–60.729 | 9.25 | wipe |
 | s10 | 纸往西传 | TIMELINE-001(spread) | spread 60.729–71.883 | 11.27 | zoom |
-| s11 | 收尾 + 评论钩子 | PAPER-001 | ending 71.883–83.48 | 11.80 | fade |
+| s11 | 收尾 + 评论钩子（返修版换 ENDING-001：四格回顾→合成整纸→标题+Cta） | ENDING-001 | ending 71.883–83.48 | 11.80 | fade |
 
 - 每镜 `duration` = 下一镜段落起点 + 转场重叠 − 本镜起点；最后一镜 = 段落 end + 0.18。
 - 转场混用 cut / wipe 0.55–0.65 / fade 0.45–0.5 / slide 0.55 / zoom 0.55，没有统一套同一种。
